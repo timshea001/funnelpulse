@@ -67,7 +67,34 @@ export async function POST(request: NextRequest) {
       pageViews: accountInsights.summary.viewContent || accountInsights.summary.clicks, // Fallback to clicks if no view_content
       addToCarts: accountInsights.summary.addToCarts,
       checkouts: accountInsights.summary.initiateCheckouts,
-      purchases: accountInsights.summary.purchases
+      purchases: accountInsights.summary.purchases,
+      stages: [
+        {
+          name: 'Impressions → Clicks',
+          count: accountInsights.summary.clicks,
+          conversionRate: (accountInsights.summary.clicks / accountInsights.summary.impressions) * 100
+        },
+        {
+          name: 'Clicks → Page Views',
+          count: accountInsights.summary.viewContent || accountInsights.summary.clicks,
+          conversionRate: accountInsights.summary.clicks > 0 ? ((accountInsights.summary.viewContent || accountInsights.summary.clicks) / accountInsights.summary.clicks) * 100 : 0
+        },
+        {
+          name: 'Page Views → Add to Cart',
+          count: accountInsights.summary.addToCarts,
+          conversionRate: (accountInsights.summary.viewContent || accountInsights.summary.clicks) > 0 ? (accountInsights.summary.addToCarts / (accountInsights.summary.viewContent || accountInsights.summary.clicks)) * 100 : 0
+        },
+        {
+          name: 'Add to Cart → Checkout',
+          count: accountInsights.summary.initiateCheckouts,
+          conversionRate: accountInsights.summary.addToCarts > 0 ? (accountInsights.summary.initiateCheckouts / accountInsights.summary.addToCarts) * 100 : 0
+        },
+        {
+          name: 'Checkout → Purchase',
+          count: accountInsights.summary.purchases,
+          conversionRate: accountInsights.summary.initiateCheckouts > 0 ? (accountInsights.summary.purchases / accountInsights.summary.initiateCheckouts) * 100 : 0
+        }
+      ]
     }
 
     // Calculate conversion rates
