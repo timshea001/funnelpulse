@@ -1,0 +1,195 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  clerkId   String?  @unique // Clerk user ID
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Onboarding data
+  industry                  String?
+  businessModel             String? // B2C, B2B, D2C
+  primaryGoal               String? // purchases, leads, app_installs, brand_awareness
+  averageOrderValue         Decimal? @db.Decimal(10, 2)
+  profitMargin              Decimal? @db.Decimal(5, 2) // stored as percentage
+  hasRepeatPurchases        Boolean  @default(false)
+  repeatPurchaseFrequency   String? // 1-2, 3-4, 5+, not_sure
+
+  // Calculated fields
+  breakEvenCPA    Decimal? @db.Decimal(10, 2)
+  targetCPA       Decimal? @db.Decimal(10, 2)
+  minimumROAS     Decimal? @db.Decimal(10, 2)
+  targetROAS      Decimal? @db.Decimal(10, 2)
+  ltvMultiplier   Decimal? @db.Decimal(5, 2)
+
+  // Subscription
+  subscriptionTier   String   @default("free") // free, starter, growth, agency
+  subscriptionStatus String   @default("trial") // trial, active, cancelled, past_due
+  trialEndsAt        DateTime?
+  stripeCustomerId   String?
+  stripeSubscriptionId String?
+
+  // Relations
+  adAccounts       AdAccount[]
+  reports          Report[]
+  scheduledReports ScheduledReport[]
+  teamMembers      TeamMember[]      @relation("TeamOwner")
+  memberOf         TeamMember[]      @relation("TeamMember")
+
+  @@index([email])
+  @@index([clerkId])
+}
+
+model AdAccount {
+  id               String    @id @default(uuid())
+  userId           String
+  platform         String // meta, google, tiktok
+  accountId        String // external platform account ID
+  accountName      String?
+  accessToken      String? // encrypted
+  refreshToken     String? // encrypted
+  tokenExpiresAt   DateTime?
+  connectedAt      DateTime  @default(now())
+  lastSyncedAt     DateTime?
+  isActive         Boolean   @default(true)
+
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reports          Report[]
+  scheduledReports ScheduledReport[]
+
+  @@unique([userId, platform, accountId])
+  @@index([userId])
+  @@index([accountId])
+}
+
+model Report {
+  id               String   @id @default(uuid())
+  userId           String
+  adAccountId      String
+  reportType       String // account_overview, creative_analysis
+  dateRangeStart   DateTime
+  dateRangeEnd     DateTime
+  generatedAt      DateTime @default(now())
+
+  // Stored data snapshot
+  dataSnapshot       Json? // raw metrics from platform
+  calculatedMetrics  Json? // our calculations (conversion rates, etc.)
+  insights           Json? // generated insights from Intelligence Layer
+
+  // File storage
+  pdfUrl             String?
+
+  // Metadata
+  generationTimeMs   Int?
+
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adAccount          AdAccount @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
+  deliveries         ReportDelivery[]
+
+  @@index([userId, generatedAt])
+  @@index([adAccountId, dateRangeStart])
+}
+
+model ScheduledReport {
+  id                  String    @id @default(uuid())
+  userId              String
+  adAccountId         String
+  reportType          String
+
+  // Schedule configuration
+  frequency           String // weekly, biweekly, monthly, quarterly
+  dayOfWeek           Int? // 0-6 (Sunday-Saturday)
+  dayOfMonth          Int? // 1-28
+  timeOfDay           String? // HH:MM
+  timezone            String    @default("America/New_York")
+
+  // Date range for report
+  dateRangeType       String // last_7, last_14, last_30, this_month, this_quarter
+
+  // Delivery settings
+  recipients          String[] // array of email addresses
+  deliveryFormat      String // pdf, link, both
+  activeCampaignsOnly Boolean   @default(false)
+
+  // Status
+  isActive            Boolean   @default(true)
+  lastRunAt           DateTime?
+  nextRunAt           DateTime?
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adAccount           AdAccount @relation(fields: [adAccountId], references: [id], onDelete: Cascade)
+  deliveries          ReportDelivery[]
+
+  @@index([nextRunAt, isActive])
+}
+
+model ReportDelivery {
+  id                  String    @id @default(uuid())
+  scheduledReportId   String
+  reportId            String?
+
+  deliveredAt         DateTime  @default(now())
+  status              String // success, failed
+  errorMessage        String?
+
+  recipients          String[]
+
+  scheduledReport     ScheduledReport @relation(fields: [scheduledReportId], references: [id], onDelete: Cascade)
+  report              Report?   @relation(fields: [reportId], references: [id], onDelete: SetNull)
+
+  @@index([scheduledReportId, deliveredAt])
+}
+
+model Benchmark {
+  id            String   @id @default(uuid())
+  industry      String
+  metricName    String
+
+  // Statistical values
+  minValue      Decimal? @db.Decimal(10, 2)
+  maxValue      Decimal? @db.Decimal(10, 2)
+  avgValue      Decimal? @db.Decimal(10, 2)
+  medianValue   Decimal? @db.Decimal(10, 2)
+  percentile25  Decimal? @db.Decimal(10, 2)
+  percentile75  Decimal? @db.Decimal(10, 2)
+
+  // Metadata
+  source        String?
+  dataDate      DateTime?
+  sampleSize    Int?
+
+  updatedAt     DateTime @updatedAt
+
+  @@unique([industry, metricName])
+  @@index([industry])
+}
+
+model TeamMember {
+  id            String   @id @default(uuid())
+  userId        String // account owner
+  memberUserId  String // team member
+  role          String // admin, member, viewer
+
+  invitedAt     DateTime @default(now())
+  joinedAt      DateTime?
+
+  owner         User     @relation("TeamOwner", fields: [userId], references: [id], onDelete: Cascade)
+  member        User     @relation("TeamMember", fields: [memberUserId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, memberUserId])
+}

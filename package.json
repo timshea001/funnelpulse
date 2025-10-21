@@ -1,0 +1,54 @@
+{
+  "name": "funnelpulse",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "postinstall": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@clerk/nextjs": "^6.33.7",
+    "@prisma/client": "^6.17.1",
+    "@react-pdf/renderer": "^4.3.1",
+    "@tailwindcss/postcss": "^4.1.15",
+    "@types/node": "^24.9.0",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "autoprefixer": "^10.4.21",
+    "bcryptjs": "^3.0.2",
+    "crypto-js": "^4.2.0",
+    "date-fns": "^4.1.0",
+    "eslint": "^9.38.0",
+    "eslint-config-next": "^15.5.6",
+    "next": "^15.5.6",
+    "openai": "^6.6.0",
+    "postcss": "^8.5.6",
+    "prisma": "^6.17.1",
+    "puppeteer": "^24.25.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-pdf": "^10.2.0",
+    "recharts": "^3.3.0",
+    "resend": "^6.2.0",
+    "stripe": "^19.1.0",
+    "tailwindcss": "^4.1.15",
+    "typescript": "^5.9.3",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/crypto-js": "^4.2.2",
+    "tsx": "^4.20.6"
+  }
+}

@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 255, 255, 255;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+}
+
+.metric-card {
+  background-color: white;
+  border-radius: 0.5rem;
+  border: 1px solid rgb(229, 231, 235);
+  padding: 1.5rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  transition: box-shadow 0.2s;
+}
+
+.metric-card:hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.btn-primary {
+  background-color: rgb(79, 70, 229);
+  color: white;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: rgb(67, 56, 202);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background-color: rgb(243, 244, 246);
+  color: rgb(17, 24, 39);
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: rgb(229, 231, 235);
+}
+
+.status-good {
+  color: rgb(22, 163, 74);
+}
+
+.status-warning {
+  color: rgb(245, 158, 11);
+}
+
+.status-bad {
+  color: rgb(220, 38, 38);
+}
