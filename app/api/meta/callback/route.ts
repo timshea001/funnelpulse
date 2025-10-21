@@ -54,20 +54,27 @@ export async function GET(request: NextRequest) {
     tokenUrl.searchParams.set('redirect_uri', redirectUri)
     tokenUrl.searchParams.set('code', code)
 
+    console.log('Exchanging code for access token...')
     const tokenResponse = await fetch(tokenUrl.toString())
 
     if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text()
+      console.error('Token exchange failed:', errorText)
       throw new Error('Failed to exchange code for token')
     }
 
     const tokenData = await tokenResponse.json()
     const accessToken = tokenData.access_token
+    console.log('Access token obtained successfully')
 
     // Get user's ad accounts
+    console.log('Fetching ad accounts for user:', userId)
     const metaAPI = new MetaAPI(accessToken)
     const accounts = await metaAPI.getAdAccounts()
+    console.log(`Found ${accounts.length} ad accounts:`, accounts.map(a => ({ id: a.id, name: a.name })))
 
     if (accounts.length === 0) {
+      console.error('No ad accounts found for user:', userId)
       return NextResponse.redirect(
         new URL('/onboarding?error=No ad accounts found. Please ensure you have access to Meta ad accounts.', request.url)
       )
@@ -75,9 +82,11 @@ export async function GET(request: NextRequest) {
 
     // Store ad accounts in database
     const encryptedToken = await encrypt(accessToken)
+    console.log('Storing', accounts.length, 'ad accounts in database...')
 
     for (const account of accounts) {
-      await db.adAccount.upsert({
+      console.log('Upserting account:', account.id, account.name)
+      const upsertedAccount = await db.adAccount.upsert({
         where: {
           userId_platform_accountId: {
             userId,
@@ -105,7 +114,10 @@ export async function GET(request: NextRequest) {
           isActive: true
         }
       })
+      console.log('Account upserted successfully:', upsertedAccount.id)
     }
+
+    console.log('All ad accounts stored successfully. Redirecting to dashboard...')
 
     // Redirect to dashboard
     return NextResponse.redirect(new URL('/dashboard', request.url))
