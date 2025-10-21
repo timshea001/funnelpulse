@@ -92,9 +92,14 @@ export async function POST(request: NextRequest) {
     // Prepare data for AI insights
     const reportData = {
       summary: {
+        impressions: accountInsights.summary.impressions,
+        clicks: accountInsights.summary.clicks,
         spend: accountInsights.summary.spend,
         revenue: accountInsights.summary.revenue,
         purchases: accountInsights.summary.purchases,
+        ctr: accountInsights.summary.impressions > 0 ? (accountInsights.summary.clicks / accountInsights.summary.impressions) * 100 : 0,
+        cpm: accountInsights.summary.impressions > 0 ? (accountInsights.summary.spend / accountInsights.summary.impressions) * 1000 : 0,
+        cpc: accountInsights.summary.clicks > 0 ? accountInsights.summary.spend / accountInsights.summary.clicks : 0,
         roas,
         cpa
       },
