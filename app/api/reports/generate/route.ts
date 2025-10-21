@@ -101,9 +101,9 @@ export async function POST(request: NextRequest) {
       funnel: funnelData,
       conversionRates,
       profitability: {
-        breakEvenCPA: user.breakEvenCpa?.toNumber() || 0,
-        targetROAS: user.targetRoas?.toNumber() || 0,
-        isProfitable: cpa ? cpa < (user.breakEvenCpa?.toNumber() || 0) : false
+        breakEvenCPA: user.breakEvenCPA?.toNumber() || 0,
+        targetROAS: user.targetROAS?.toNumber() || 0,
+        isProfitable: cpa ? cpa < (user.breakEvenCPA?.toNumber() || 0) : false
       },
       campaigns: campaignInsights.data,
       adsets: adsetInsights.data
@@ -115,8 +115,8 @@ export async function POST(request: NextRequest) {
       businessModel: user.businessModel || 'B2C',
       aov: user.averageOrderValue?.toNumber() || 0,
       margin: user.profitMargin?.toNumber() || 0,
-      breakEvenCPA: user.breakEvenCpa?.toNumber() || 0,
-      targetROAS: user.targetRoas?.toNumber() || 0,
+      breakEvenCPA: user.breakEvenCPA?.toNumber() || 0,
+      targetROAS: user.targetROAS?.toNumber() || 0,
       dateRange: `${dateRangeStart} to ${dateRangeEnd}`,
       metrics: reportData.summary,
       funnelStages: [
