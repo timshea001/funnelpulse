@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export async function GET(request: NextRequest) {
+  // Initialize Resend at runtime, not at module load time
+  const resend = new Resend(process.env.RESEND_API_KEY || '')
   try {
     // Verify cron secret (for security)
     const authHeader = request.headers.get('authorization')
