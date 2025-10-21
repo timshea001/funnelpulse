@@ -70,16 +70,17 @@ export async function POST(request: NextRequest) {
       purchases: accountInsights.summary.purchases
     }
 
-    const conversionRates = calculateConversionRates(
-      funnelData.clicks,
-      funnelData.pageViews,
-      funnelData.addToCarts,
-      funnelData.checkouts,
-      funnelData.purchases
-    )
+    // Calculate conversion rates
+    const conversionRates = {
+      clickToView: funnelData.clicks > 0 ? (funnelData.pageViews / funnelData.clicks) * 100 : 0,
+      viewToATC: funnelData.pageViews > 0 ? (funnelData.addToCarts / funnelData.pageViews) * 100 : 0,
+      atcToCheckout: funnelData.addToCarts > 0 ? (funnelData.checkouts / funnelData.addToCarts) * 100 : 0,
+      checkoutToPurchase: funnelData.checkouts > 0 ? (funnelData.purchases / funnelData.checkouts) * 100 : 0,
+      overall: funnelData.clicks > 0 ? (funnelData.purchases / funnelData.clicks) * 100 : 0
+    }
 
-    const roas = calculateROAS(accountInsights.summary.revenue, accountInsights.summary.spend)
-    const cpa = calculateCPA(accountInsights.summary.spend, accountInsights.summary.purchases)
+    const roas = accountInsights.summary.spend > 0 ? accountInsights.summary.revenue / accountInsights.summary.spend : 0
+    const cpa = accountInsights.summary.purchases > 0 ? accountInsights.summary.spend / accountInsights.summary.purchases : 0
 
     // Get benchmarks for user's industry
     const benchmarks = await db.benchmark.findMany({
