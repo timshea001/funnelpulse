@@ -35,6 +35,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Ad account not found' }, { status: 404 })
     }
 
+    if (!adAccount.accessToken) {
+      return NextResponse.json({ error: 'Access token not found' }, { status: 404 })
+    }
+
     // Decrypt the access token
     const accessToken = await decrypt(adAccount.accessToken)
 
