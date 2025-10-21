@@ -117,20 +117,12 @@ export async function POST(request: NextRequest) {
     // Generate AI insights
     const insights = await generateInsights({
       industry: user.industry || 'general',
-      businessModel: user.businessModel || 'B2C',
-      aov: user.averageOrderValue?.toNumber() || 0,
-      margin: user.profitMargin?.toNumber() || 0,
-      breakEvenCPA: user.breakEvenCPA?.toNumber() || 0,
-      targetROAS: user.targetROAS?.toNumber() || 0,
+      averageOrderValue: user.averageOrderValue?.toNumber() || 0,
+      profitMargin: user.profitMargin?.toNumber() || 0,
       dateRange: `${dateRangeStart} to ${dateRangeEnd}`,
       metrics: reportData.summary,
-      funnelStages: [
-        { name: 'Impressions → Clicks', count: funnelData.clicks, conversionRate: (funnelData.clicks / funnelData.impressions) * 100 },
-        { name: 'Clicks → Page Views', count: funnelData.pageViews, conversionRate: (funnelData.pageViews / funnelData.clicks) * 100 },
-        { name: 'Page Views → Add to Cart', count: funnelData.addToCarts, conversionRate: (funnelData.addToCarts / funnelData.pageViews) * 100 },
-        { name: 'Add to Cart → Checkout', count: funnelData.checkouts, conversionRate: (funnelData.checkouts / funnelData.addToCarts) * 100 },
-        { name: 'Checkout → Purchase', count: funnelData.purchases, conversionRate: (funnelData.purchases / funnelData.checkouts) * 100 }
-      ]
+      funnel: funnelData,
+      profitability: reportData.profitability
     })
 
     // Store report in database
