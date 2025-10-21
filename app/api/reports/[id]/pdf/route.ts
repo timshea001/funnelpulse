@@ -77,7 +77,8 @@ export async function GET(
       await browser.close()
 
       // Return PDF
-      const filename = `report-${report.adAccount.accountName.replace(/\s+/g, '-')}-${report.dateRangeStart.toISOString().split('T')[0]}.pdf`
+      const accountName = report.adAccount?.accountName || 'account'
+      const filename = `report-${accountName.replace(/\s+/g, '-')}-${report.dateRangeStart.toISOString().split('T')[0]}.pdf`
 
       return new NextResponse(pdf, {
         headers: {
