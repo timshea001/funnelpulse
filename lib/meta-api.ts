@@ -1,4 +1,4 @@
-import { MetaInsight, AdAccount, CampaignData } from '@/types'
+import { MetaInsights, AdAccount, CampaignData } from '@/types'
 
 export class MetaAPI {
   private accessToken: string
