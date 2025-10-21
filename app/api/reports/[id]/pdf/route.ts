@@ -80,7 +80,7 @@ export async function GET(
       const accountName = report.adAccount?.accountName || 'account'
       const filename = `report-${accountName.replace(/\s+/g, '-')}-${report.dateRangeStart.toISOString().split('T')[0]}.pdf`
 
-      return new NextResponse(pdf, {
+      return new NextResponse(Buffer.from(pdf), {
         headers: {
           'Content-Type': 'application/pdf',
           'Content-Disposition': `attachment; filename="${filename}"`,
