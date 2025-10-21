@@ -1,4 +1,27 @@
-import { MetaInsights, AdAccount, CampaignData } from '@/types'
+import { MetaInsights } from '@/types'
+
+interface AdAccount {
+  id: string
+  name: string
+  account_status: number
+  currency: string
+  timezone_name: string
+  business?: any
+}
+
+interface MetaInsightResponse {
+  summary: {
+    spend: number
+    impressions: number
+    clicks: number
+    purchases: number
+    revenue: number
+    addToCarts: number
+    initiateCheckouts: number
+    viewContent: number
+  }
+  data: any[]
+}
 
 export class MetaAPI {
   private accessToken: string
@@ -106,7 +129,7 @@ export class MetaAPI {
     startDate: string,
     endDate: string,
     level: 'account' | 'campaign' | 'adset' | 'ad' = 'account'
-  ): Promise<MetaInsight> {
+  ): Promise<MetaInsightResponse> {
     try {
       const accountIdFormatted = accountId.startsWith('act_') ? accountId : `act_${accountId}`
 
@@ -162,7 +185,7 @@ export class MetaAPI {
     }
   }
 
-  private processInsightsData(data: any[]): MetaInsight {
+  private processInsightsData(data: any[]): MetaInsightResponse {
     const processed = data.map(row => {
       // Extract actions and action values
       let purchases = 0
