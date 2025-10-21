@@ -80,47 +80,38 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Store ad accounts in database
+    // Store access token and available accounts temporarily in the database
+    // We'll store them as a pending connection that expires in 10 minutes
     const encryptedToken = await encrypt(accessToken)
-    console.log('Storing', accounts.length, 'ad accounts in database...')
+    const accountsData = accounts.map(a => ({
+      id: a.id,
+      name: a.name,
+      currency: a.currency,
+      account_status: a.account_status
+    }))
 
-    for (const account of accounts) {
-      console.log('Upserting account:', account.id, account.name)
-      const upsertedAccount = await db.adAccount.upsert({
-        where: {
-          userId_platform_accountId: {
-            userId,
-            platform: 'meta',
-            accountId: account.id
-          }
-        },
-        create: {
-          userId,
-          platform: 'meta',
-          accountId: account.id,
-          accountName: account.name,
-          accessToken: encryptedToken,
-          refreshToken: encryptedToken, // Meta doesn't use refresh tokens the same way
-          tokenExpiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days
-          connectedAt: new Date(),
-          lastSyncedAt: new Date(),
-          isActive: true
-        },
-        update: {
-          accountName: account.name,
-          accessToken: encryptedToken,
-          tokenExpiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
-          lastSyncedAt: new Date(),
-          isActive: true
-        }
-      })
-      console.log('Account upserted successfully:', upsertedAccount.id)
-    }
+    // Store or update the pending OAuth session
+    await db.pendingOAuthSession.upsert({
+      where: { userId },
+      create: {
+        userId,
+        platform: 'meta',
+        accessToken: encryptedToken,
+        availableAccounts: accountsData,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+      },
+      update: {
+        platform: 'meta',
+        accessToken: encryptedToken,
+        availableAccounts: accountsData,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+      }
+    })
 
-    console.log('All ad accounts stored successfully. Redirecting to dashboard...')
+    console.log('Stored pending OAuth session. Redirecting to account selection...')
 
-    // Redirect to dashboard
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    // Redirect to account selection page
+    return NextResponse.redirect(new URL('/select-accounts', request.url))
   } catch (error) {
     console.error('Error in Meta OAuth callback:', error)
     return NextResponse.redirect(

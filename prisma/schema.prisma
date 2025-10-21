@@ -193,3 +193,15 @@ model TeamMember {
 
   @@unique([userId, memberUserId])
 }
+
+model PendingOAuthSession {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  platform        String // meta, google, etc.
+  accessToken     String // encrypted
+  availableAccounts Json // Array of account data
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+
+  @@index([userId, expiresAt])
+}
