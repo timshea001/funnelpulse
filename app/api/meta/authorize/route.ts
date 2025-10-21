@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
     authUrl.searchParams.set('scope', scopes)
     authUrl.searchParams.set('state', userId) // Pass userId as state for callback
     authUrl.searchParams.set('response_type', 'code')
+    authUrl.searchParams.set('auth_type', 'rerequest') // Force re-authorization
+    authUrl.searchParams.set('display', 'popup')
 
     return NextResponse.redirect(authUrl.toString())
   } catch (error) {
