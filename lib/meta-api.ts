@@ -100,7 +100,7 @@ export class MetaAPI {
                   console.log(`Found ${businessAccounts.length} ${name} accounts in business ${business.name}`)
 
                   for (const account of businessAccounts) {
-                    if (!accounts.find(existingAccount => existingAccount.id === account.id)) {
+                    if (!accounts.find((existingAccount: AdAccount) => existingAccount.id === account.id)) {
                       accounts.push(account)
                       console.log(`Added new ${name} account from business: ${account.name} (${account.id})`)
                     }
