@@ -4,7 +4,6 @@ import { db } from '@/lib/db'
 import { decrypt } from '@/lib/encryption'
 import { MetaAPI } from '@/lib/meta-api'
 import { generateInsights } from '@/lib/intelligence'
-import { calculateConversionRates, calculateROAS, calculateCPA } from '@/lib/calculations'
 
 export async function POST(request: NextRequest) {
   try {

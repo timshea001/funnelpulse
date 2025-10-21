@@ -4,9 +4,10 @@ import { db } from '@/lib/db'
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+  const { id } = await params
     const { userId } = await auth()
 
     if (!userId) {
@@ -25,7 +26,7 @@ export async function PUT(
 
     const schedule = await db.scheduledReport.updateMany({
       where: {
-        id: params.id,
+        id: id,
         userId: user.id
       },
       data: body
@@ -40,8 +41,9 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const { userId } = await auth()
 
@@ -59,7 +61,7 @@ export async function DELETE(
 
     await db.scheduledReport.deleteMany({
       where: {
-        id: params.id,
+        id: id,
         userId: user.id
       }
     })

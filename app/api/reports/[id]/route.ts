@@ -4,8 +4,9 @@ import { db } from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const { userId } = await auth()
 
@@ -25,7 +26,7 @@ export async function GET(
     // Fetch report
     const report = await db.report.findFirst({
       where: {
-        id: params.id,
+        id: id,
         userId: user.id
       },
       include: {
@@ -51,8 +52,9 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const { userId } = await auth()
 
@@ -72,7 +74,7 @@ export async function DELETE(
     // Delete report
     await db.report.deleteMany({
       where: {
-        id: params.id,
+        id: id,
         userId: user.id
       }
     })

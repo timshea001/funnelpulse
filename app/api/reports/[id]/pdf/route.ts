@@ -5,8 +5,9 @@ import puppeteer from 'puppeteer'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const { userId } = await auth()
 
@@ -26,7 +27,7 @@ export async function GET(
     // Fetch report
     const report = await db.report.findFirst({
       where: {
-        id: params.id,
+        id: id,
         userId: user.id
       },
       include: {
@@ -53,7 +54,7 @@ export async function GET(
 
       // Build the report URL (for rendering)
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-      const reportUrl = `${baseUrl}/reports/${params.id}`
+      const reportUrl = `${baseUrl}/reports/${id}`
 
       // Navigate to the report page
       await page.goto(reportUrl, {
