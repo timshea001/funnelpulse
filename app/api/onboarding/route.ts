@@ -77,8 +77,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, user: dbUser })
   } catch (error) {
     console.error('Onboarding error:', error)
+    console.error('Error details:', error instanceof Error ? error.message : JSON.stringify(error))
     return NextResponse.json(
-      { error: 'Failed to save onboarding data' },
+      {
+        error: 'Failed to save onboarding data',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }
