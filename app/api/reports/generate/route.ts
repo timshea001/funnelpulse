@@ -134,6 +134,8 @@ export async function POST(request: NextRequest) {
       conversionRates,
       profitability: {
         breakEvenCPA: user.breakEvenCPA?.toNumber() || 0,
+        targetCPA: user.targetCPA?.toNumber() || 0,
+        minimumROAS: user.minimumROAS?.toNumber() || 0,
         targetROAS: user.targetROAS?.toNumber() || 0,
         isProfitable: cpa ? cpa < (user.breakEvenCPA?.toNumber() || 0) : false
       },
