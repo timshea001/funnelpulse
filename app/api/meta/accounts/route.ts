@@ -4,16 +4,26 @@ import { db } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth()
+    const { userId: clerkUserId } = await auth()
 
-    if (!userId) {
+    if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Get database user ID from Clerk ID
+    const user = await db.user.findUnique({
+      where: { clerkId: clerkUserId },
+      select: { id: true }
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
     // Fetch user's connected ad accounts from database
     const adAccounts = await db.adAccount.findMany({
       where: {
-        userId,
+        userId: user.id,
         isActive: true
       },
       select: {
@@ -28,6 +38,8 @@ export async function GET(request: NextRequest) {
         connectedAt: 'desc'
       }
     })
+
+    console.log(`Found ${adAccounts.length} ad accounts for user ${user.id}`)
 
     return NextResponse.json({ accounts: adAccounts })
   } catch (error) {

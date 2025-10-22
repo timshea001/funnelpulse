@@ -68,6 +68,7 @@ export default function SelectAccountsPage() {
     setError(null)
 
     try {
+      console.log('Saving accounts:', Array.from(selectedAccounts))
       const response = await fetch('/api/meta/save-accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -76,13 +77,20 @@ export default function SelectAccountsPage() {
         })
       })
 
+      console.log('Save response status:', response.status)
+
       if (!response.ok) {
         const error = await response.json()
+        console.error('Save error:', error)
         throw new Error(error.error || 'Failed to save accounts')
       }
 
+      const result = await response.json()
+      console.log('Save result:', result)
+
       router.push('/dashboard')
     } catch (err) {
+      console.error('Error in handleSaveAccounts:', err)
       setError(err instanceof Error ? err.message : 'Failed to save accounts')
       setSaving(false)
     }
