@@ -18,17 +18,30 @@ export default function OnboardingPage() {
     primaryGoal: 'purchases' as 'purchases' | 'leads' | 'app_installs' | 'brand_awareness',
   })
 
-  // Check if user has already completed onboarding
+  // Check if user has already completed onboarding and has ad accounts
   useEffect(() => {
     async function checkOnboardingStatus() {
       try {
-        const response = await fetch('/api/user/profile')
-        if (response.ok) {
-          const data = await response.json()
-          // If user has industry set, they've completed onboarding
-          if (data.user?.industry) {
+        // Check if user has ad accounts
+        const accountsResponse = await fetch('/api/meta/accounts')
+        if (accountsResponse.ok) {
+          const accountsData = await accountsResponse.json()
+          if (accountsData.accounts && accountsData.accounts.length > 0) {
+            // User has ad accounts, redirect to dashboard
             router.push('/dashboard')
             return
+          }
+        }
+
+        // If no ad accounts, check if they completed onboarding form
+        const profileResponse = await fetch('/api/user/profile')
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json()
+          // If user has industry set, they've completed the form part
+          // but might not have connected accounts yet
+          if (profileData.user?.industry) {
+            // Skip to step 3 (connect accounts)
+            setStep(3)
           }
         }
       } catch (error) {
