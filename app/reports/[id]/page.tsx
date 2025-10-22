@@ -107,6 +107,120 @@ export default function ReportPage() {
     }
   }
 
+  // Generate educational insights based on performance
+  const generateFunnelInsights = () => {
+    const funnelInsights = []
+
+    // Click to ATC Analysis
+    if (clickToATC < benchmarks.clickToATC.min) {
+      funnelInsights.push({
+        stage: 'Click → Add to Cart',
+        issue: `Your ${clickToATC.toFixed(1)}% conversion rate is below the ${benchmarks.clickToATC.min}% industry benchmark`,
+        factors: [
+          'Product page load speed - Every second of delay reduces conversions by 7%',
+          'Product images & video - High-quality visuals showing product in use increase trust',
+          'Price positioning - Unexpected prices or missing value props cause immediate exits',
+          'Product descriptions - Benefits-focused copy outperforms feature lists',
+          'Social proof - Reviews, ratings, and testimonials reduce purchase anxiety',
+          'Mobile optimization - 60%+ of traffic is mobile; poor mobile UX kills conversions'
+        ],
+        recommendations: [
+          'Test your page load speed on PageSpeed Insights - aim for <2 seconds',
+          'Add lifestyle imagery showing your product in context',
+          'Include at least 3-5 customer reviews on product pages',
+          'A/B test benefit-driven headlines vs. feature lists',
+          'Check mobile experience - tap targets should be thumb-friendly'
+        ]
+      })
+    } else if (clickToATC > benchmarks.clickToATC.max) {
+      funnelInsights.push({
+        stage: 'Click → Add to Cart',
+        issue: `Strong performance at ${clickToATC.toFixed(1)}% (above ${benchmarks.clickToATC.max}% benchmark)`,
+        factors: [
+          'Your product page experience is converting well above industry standards',
+          'This indicates strong product-market fit and effective landing pages'
+        ],
+        recommendations: [
+          'Document what\'s working - analyze your top-performing product pages',
+          'Focus optimization efforts on the next funnel stage to maximize revenue',
+          'Consider slight price increases if you have this much conviction from visitors'
+        ]
+      })
+    }
+
+    // ATC to Checkout Analysis
+    if (atcToCheckout < benchmarks.atcToCheckout.min) {
+      funnelInsights.push({
+        stage: 'Add to Cart → Checkout',
+        issue: `Your ${atcToCheckout.toFixed(1)}% progression rate is below the ${benchmarks.atcToCheckout.min}% industry benchmark`,
+        factors: [
+          'Unexpected shipping costs - The #1 cart abandonment reason (48% of users)',
+          'Complex checkout process - Each extra step reduces conversions by 20%',
+          'Account creation friction - Forced account creation kills 23% of purchases',
+          'Payment options - Limited payment methods (no PayPal, Apple Pay) lose 8-10% of buyers',
+          'Trust signals - Missing security badges or unclear return policy creates doubt',
+          'Mobile cart experience - Pinch-and-zoom or hard-to-tap buttons cause exits'
+        ],
+        recommendations: [
+          'Show shipping costs earlier in the journey (product page or cart)',
+          'Offer guest checkout - collect minimal info upfront',
+          'Add trust badges near checkout button (secure checkout, money-back guarantee)',
+          'Implement express checkout options (Shop Pay, Apple Pay, Google Pay)',
+          'Test a progress indicator showing steps remaining in checkout'
+        ]
+      })
+    }
+
+    // Checkout to Purchase Analysis
+    if (checkoutToPurchase < benchmarks.checkoutToPurchase.min) {
+      funnelInsights.push({
+        stage: 'Checkout → Purchase',
+        issue: `Your ${checkoutToPurchase.toFixed(1)}% completion rate is below the ${benchmarks.checkoutToPurchase.min}% industry benchmark`,
+        factors: [
+          'Payment errors - Card declines or processor issues at final step',
+          'Form validation issues - Unclear error messages or strict formatting requirements',
+          'Last-minute shipping surprises - Long delivery times revealed only at checkout',
+          'Mobile checkout friction - Small input fields or auto-fill not working',
+          'Missing reassurance - No order summary or unclear what happens after purchase',
+          'Slow processing - Page appears to hang, causing users to abandon or double-click'
+        ],
+        recommendations: [
+          'Implement cart abandonment emails for this stage - users are highly qualified',
+          'Add inline form validation with helpful error messages',
+          'Display order summary alongside payment form for reassurance',
+          'Test payment processor - ensure mobile wallets work seamlessly',
+          'Add a clear "What happens next" message near submit button',
+          'Show loading state immediately on submit to prevent double-clicks'
+        ]
+      })
+    }
+
+    // Overall funnel health
+    const overallHealth = overallAtcToPurchase
+    if (overallHealth < benchmarks.overallAtcToPurchase.min) {
+      funnelInsights.push({
+        stage: 'Overall Funnel Health',
+        issue: `Overall conversion (ATC→Purchase) of ${overallHealth.toFixed(1)}% suggests systematic checkout issues`,
+        factors: [
+          'Multiple friction points compounding throughout the checkout flow',
+          'This indicates the checkout experience needs comprehensive optimization',
+          'Small improvements at each stage multiply into significant revenue gains'
+        ],
+        recommendations: [
+          'Prioritize checkout optimization - this is your highest-ROI opportunity',
+          'Implement session recordings to watch real user checkout experiences',
+          'Set up funnel tracking in Google Analytics to identify exact drop-off points',
+          'Consider a complete checkout redesign using best-practice templates',
+          'Test one-page checkout vs. multi-step to see what works for your audience'
+        ]
+      })
+    }
+
+    return funnelInsights
+  }
+
+  const funnelInsights = generateFunnelInsights()
+
   return (
     <div className="min-h-screen bg-gray-50">
       <style jsx global>{`
@@ -230,35 +344,80 @@ export default function ReportPage() {
             )
           })()}
 
-          {/* Funnel Activity */}
+          {/* Visual Funnel */}
           <section className="mb-10">
-            <h2 className="text-xl font-semibold mb-5 pb-2 border-b border-gray-300">Funnel Activity</h2>
-            <table className="w-full border-collapse mb-6">
-              <thead>
-                <tr>
-                  <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Stage</th>
-                  <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Count</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="hover:bg-gray-50">
-                  <td className="p-3 border-b border-gray-200 font-semibold">Link Clicks</td>
-                  <td className="p-3 border-b border-gray-200">{formatNumber(clicks)}</td>
-                </tr>
-                <tr className="hover:bg-gray-50">
-                  <td className="p-3 border-b border-gray-200 font-semibold">Add to Carts</td>
-                  <td className="p-3 border-b border-gray-200">{formatNumber(addToCarts)}</td>
-                </tr>
-                <tr className="hover:bg-gray-50">
-                  <td className="p-3 border-b border-gray-200 font-semibold">Checkouts Initiated</td>
-                  <td className="p-3 border-b border-gray-200">{formatNumber(checkouts)}</td>
-                </tr>
-                <tr className="hover:bg-gray-50">
-                  <td className="p-3 border-b border-gray-200 font-semibold">Purchases</td>
-                  <td className="p-3 border-b border-gray-200">{formatNumber(purchases)}</td>
-                </tr>
-              </tbody>
-            </table>
+            <h2 className="text-xl font-semibold mb-5 pb-2 border-b border-gray-300">Conversion Funnel Visualization</h2>
+
+            <div className="space-y-1 mb-8">
+              {/* Stage 1: Clicks */}
+              <div className="relative">
+                <div className="bg-blue-600 text-white p-4 flex justify-between items-center" style={{ width: '100%' }}>
+                  <span className="font-semibold">Link Clicks</span>
+                  <span className="text-lg font-bold">{formatNumber(clicks)}</span>
+                </div>
+              </div>
+
+              {/* Drop-off 1 */}
+              <div className="flex items-center justify-between px-4 py-2 bg-red-50 text-sm">
+                <span className="text-red-700">
+                  ↓ Drop-off: {formatNumber(clicks - addToCarts)} users ({clicks > 0 ? ((clicks - addToCarts) / clicks * 100).toFixed(1) : 0}%)
+                </span>
+                <span className={`font-semibold ${getStatus(clickToATC, benchmarks.clickToATC).class}`}>
+                  Conversion: {clickToATC.toFixed(1)}% {getStatus(clickToATC, benchmarks.clickToATC).text === 'Below target' ? '⚠️' : '✓'}
+                </span>
+              </div>
+
+              {/* Stage 2: Add to Cart */}
+              <div className="relative">
+                <div className="bg-blue-500 text-white p-4 flex justify-between items-center" style={{ width: addToCarts > 0 ? `${(addToCarts / clicks) * 100}%` : '0%', minWidth: '40%' }}>
+                  <span className="font-semibold">Add to Carts</span>
+                  <span className="text-lg font-bold">{formatNumber(addToCarts)}</span>
+                </div>
+              </div>
+
+              {/* Drop-off 2 */}
+              <div className="flex items-center justify-between px-4 py-2 bg-red-50 text-sm">
+                <span className="text-red-700">
+                  ↓ Drop-off: {formatNumber(addToCarts - checkouts)} users ({addToCarts > 0 ? ((addToCarts - checkouts) / addToCarts * 100).toFixed(1) : 0}%)
+                </span>
+                <span className={`font-semibold ${getStatus(atcToCheckout, benchmarks.atcToCheckout).class}`}>
+                  Conversion: {atcToCheckout.toFixed(1)}% {getStatus(atcToCheckout, benchmarks.atcToCheckout).text === 'Below target' ? '⚠️' : '✓'}
+                </span>
+              </div>
+
+              {/* Stage 3: Checkout */}
+              <div className="relative">
+                <div className="bg-blue-400 text-white p-4 flex justify-between items-center" style={{ width: checkouts > 0 ? `${(checkouts / clicks) * 100}%` : '0%', minWidth: '35%' }}>
+                  <span className="font-semibold">Checkouts Initiated</span>
+                  <span className="text-lg font-bold">{formatNumber(checkouts)}</span>
+                </div>
+              </div>
+
+              {/* Drop-off 3 */}
+              <div className="flex items-center justify-between px-4 py-2 bg-red-50 text-sm">
+                <span className="text-red-700">
+                  ↓ Drop-off: {formatNumber(checkouts - purchases)} users ({checkouts > 0 ? ((checkouts - purchases) / checkouts * 100).toFixed(1) : 0}%)
+                </span>
+                <span className={`font-semibold ${getStatus(checkoutToPurchase, benchmarks.checkoutToPurchase).class}`}>
+                  Conversion: {checkoutToPurchase.toFixed(1)}% {getStatus(checkoutToPurchase, benchmarks.checkoutToPurchase).text === 'Below target' ? '⚠️' : '✓'}
+                </span>
+              </div>
+
+              {/* Stage 4: Purchase */}
+              <div className="relative">
+                <div className="bg-green-600 text-white p-4 flex justify-between items-center" style={{ width: purchases > 0 ? `${(purchases / clicks) * 100}%` : '0%', minWidth: '30%' }}>
+                  <span className="font-semibold">Purchases</span>
+                  <span className="text-lg font-bold">{formatNumber(purchases)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
+              <p className="text-sm text-gray-700">
+                <strong>Overall Funnel Efficiency:</strong> {clicks > 0 ? ((purchases / clicks) * 100).toFixed(2) : 0}% of clicks result in purchases
+                ({formatNumber(clicks - purchases)} potential customers lost through the funnel)
+              </p>
+            </div>
           </section>
 
           {/* Conversion Rates vs Benchmarks */}

@@ -164,11 +164,59 @@ export default function DashboardPage() {
   const checkouts = data.initiateCheckouts || 0
   const purchases = data.purchases || 0
 
-  const ctr = impressions > 0 ? ((clicks / impressions) * 100).toFixed(2) : '0.00'
-  const viewRate = clicks > 0 ? ((pageViews / clicks) * 100).toFixed(2) : '0.00'
-  const clickToAtc = clicks > 0 ? ((addToCarts / clicks) * 100).toFixed(2) : '0.00'
-  const atcToCheckout = addToCarts > 0 ? ((checkouts / addToCarts) * 100).toFixed(2) : '0.00'
-  const checkoutToPurchase = checkouts > 0 ? ((purchases / checkouts) * 100).toFixed(2) : '0.00'
+  // Calculate metrics as numbers for comparison
+  const ctrNum = impressions > 0 ? (clicks / impressions) * 100 : 0
+  const viewRateNum = clicks > 0 ? (pageViews / clicks) * 100 : 0
+  const clickToAtcNum = clicks > 0 ? (addToCarts / clicks) * 100 : 0
+  const atcToCheckoutNum = addToCarts > 0 ? (checkouts / addToCarts) * 100 : 0
+  const checkoutToPurchaseNum = checkouts > 0 ? (purchases / checkouts) * 100 : 0
+
+  // Format for display
+  const ctr = ctrNum.toFixed(2)
+  const viewRate = viewRateNum.toFixed(2)
+  const clickToAtc = clickToAtcNum.toFixed(2)
+  const atcToCheckout = atcToCheckoutNum.toFixed(2)
+  const checkoutToPurchase = checkoutToPurchaseNum.toFixed(2)
+
+  // E-commerce benchmarks
+  const benchmarks = {
+    ctr: { min: 1.5, max: 3.0, name: 'CTR' },
+    clickToAtc: { min: 8, max: 12, name: 'Click→ATC' },
+    atcToCheckout: { min: 45, max: 60, name: 'ATC→Checkout' },
+    checkoutToPurchase: { min: 60, max: 75, name: 'Checkout→Purchase' }
+  }
+
+  // Determine status for each stage
+  const getStageStatus = (value: number, benchmark: { min: number, max: number }) => {
+    if (value >= benchmark.min) return 'good'
+    if (value >= benchmark.min * 0.8) return 'warning'
+    return 'critical'
+  }
+
+  const ctrStatus = getStageStatus(ctrNum, benchmarks.ctr)
+  const clickToAtcStatus = getStageStatus(clickToAtcNum, benchmarks.clickToAtc)
+  const atcToCheckoutStatus = getStageStatus(atcToCheckoutNum, benchmarks.atcToCheckout)
+  const checkoutToPurchaseStatus = getStageStatus(checkoutToPurchaseNum, benchmarks.checkoutToPurchase)
+
+  // Find all problematic stages
+  const problematicStages = []
+  if (ctrStatus === 'critical') problematicStages.push({ name: 'CTR', value: ctrNum, benchmark: benchmarks.ctr, severity: 'critical' })
+  if (ctrStatus === 'warning') problematicStages.push({ name: 'CTR', value: ctrNum, benchmark: benchmarks.ctr, severity: 'warning' })
+  if (clickToAtcStatus === 'critical') problematicStages.push({ name: 'Click→ATC', value: clickToAtcNum, benchmark: benchmarks.clickToAtc, severity: 'critical' })
+  if (clickToAtcStatus === 'warning') problematicStages.push({ name: 'Click→ATC', value: clickToAtcNum, benchmark: benchmarks.clickToAtc, severity: 'warning' })
+  if (atcToCheckoutStatus === 'critical') problematicStages.push({ name: 'ATC→Checkout', value: atcToCheckoutNum, benchmark: benchmarks.atcToCheckout, severity: 'critical' })
+  if (atcToCheckoutStatus === 'warning') problematicStages.push({ name: 'ATC→Checkout', value: atcToCheckoutNum, benchmark: benchmarks.atcToCheckout, severity: 'warning' })
+  if (checkoutToPurchaseStatus === 'critical') problematicStages.push({ name: 'Checkout→Purchase', value: checkoutToPurchaseNum, benchmark: benchmarks.checkoutToPurchase, severity: 'critical' })
+  if (checkoutToPurchaseStatus === 'warning') problematicStages.push({ name: 'Checkout→Purchase', value: checkoutToPurchaseNum, benchmark: benchmarks.checkoutToPurchase, severity: 'warning' })
+
+  // Sort by severity (critical first) then by how far below benchmark
+  problematicStages.sort((a, b) => {
+    if (a.severity === 'critical' && b.severity !== 'critical') return -1
+    if (b.severity === 'critical' && a.severity !== 'critical') return 1
+    const aGap = (a.benchmark.min - a.value) / a.benchmark.min
+    const bGap = (b.benchmark.min - b.value) / b.benchmark.min
+    return bGap - aGap
+  })
 
   if (loading) {
     return (
@@ -252,11 +300,18 @@ export default function DashboardPage() {
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500" style={{ width: '100%' }} />
+                    <div
+                      className={`h-full ${ctrStatus === 'good' ? 'bg-green-500' : ctrStatus === 'warning' ? 'bg-amber-500' : 'bg-red-500'}`}
+                      style={{ width: '100%' }}
+                    />
                   </div>
-                  <div className="text-sm font-medium text-green-600">{ctr}% CTR</div>
+                  <div className={`text-sm font-medium ${ctrStatus === 'good' ? 'text-green-600' : ctrStatus === 'warning' ? 'text-amber-600' : 'text-red-600'}`}>
+                    {ctr}% CTR
+                  </div>
                 </div>
-                <div className="text-xs text-gray-500 mt-1">Benchmark: 1.8% • Status: Above ✓</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Benchmark: {benchmarks.ctr.min}-{benchmarks.ctr.max}% • Status: {ctrStatus === 'good' ? 'Good ✓' : ctrStatus === 'warning' ? 'Below ⚠' : 'Critical ✗'}
+                </div>
               </div>
               <div className="w-48">
                 <div className="text-sm font-medium text-gray-700">Clicks</div>
@@ -288,11 +343,18 @@ export default function DashboardPage() {
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-red-500" style={{ width: `${clickToAtc}%` }} />
+                    <div
+                      className={`h-full ${clickToAtcStatus === 'good' ? 'bg-green-500' : clickToAtcStatus === 'warning' ? 'bg-amber-500' : 'bg-red-500'}`}
+                      style={{ width: `${Math.min(clickToAtcNum, 100)}%` }}
+                    />
                   </div>
-                  <div className="text-sm font-medium text-red-600">{clickToAtc}% ATC Rate</div>
+                  <div className={`text-sm font-medium ${clickToAtcStatus === 'good' ? 'text-green-600' : clickToAtcStatus === 'warning' ? 'text-amber-600' : 'text-red-600'}`}>
+                    {clickToAtc}% ATC Rate
+                  </div>
                 </div>
-                <div className="text-xs text-gray-500 mt-1">Benchmark: 8-12% • Status: Below</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Benchmark: {benchmarks.clickToAtc.min}-{benchmarks.clickToAtc.max}% • Status: {clickToAtcStatus === 'good' ? 'Good ✓' : clickToAtcStatus === 'warning' ? 'Below ⚠' : 'Critical ✗'}
+                </div>
               </div>
               <div className="w-48">
                 <div className="text-sm font-medium text-gray-700">Add to Carts</div>
@@ -306,11 +368,18 @@ export default function DashboardPage() {
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-amber-500" style={{ width: `${atcToCheckout}%` }} />
+                    <div
+                      className={`h-full ${atcToCheckoutStatus === 'good' ? 'bg-green-500' : atcToCheckoutStatus === 'warning' ? 'bg-amber-500' : 'bg-red-500'}`}
+                      style={{ width: `${Math.min(atcToCheckoutNum, 100)}%` }}
+                    />
                   </div>
-                  <div className="text-sm font-medium text-amber-600">{atcToCheckout}%</div>
+                  <div className={`text-sm font-medium ${atcToCheckoutStatus === 'good' ? 'text-green-600' : atcToCheckoutStatus === 'warning' ? 'text-amber-600' : 'text-red-600'}`}>
+                    {atcToCheckout}%
+                  </div>
                 </div>
-                <div className="text-xs text-gray-500 mt-1">Benchmark: 45-60% • Status: Within range</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Benchmark: {benchmarks.atcToCheckout.min}-{benchmarks.atcToCheckout.max}% • Status: {atcToCheckoutStatus === 'good' ? 'Good ✓' : atcToCheckoutStatus === 'warning' ? 'Below ⚠' : 'Critical ✗'}
+                </div>
               </div>
               <div className="w-48">
                 <div className="text-sm font-medium text-gray-700">Checkouts</div>
@@ -324,11 +393,18 @@ export default function DashboardPage() {
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-red-500" style={{ width: `${checkoutToPurchase}%` }} />
+                    <div
+                      className={`h-full ${checkoutToPurchaseStatus === 'good' ? 'bg-green-500' : checkoutToPurchaseStatus === 'warning' ? 'bg-amber-500' : 'bg-red-500'}`}
+                      style={{ width: `${Math.min(checkoutToPurchaseNum, 100)}%` }}
+                    />
                   </div>
-                  <div className="text-sm font-medium text-red-600">{checkoutToPurchase}%</div>
+                  <div className={`text-sm font-medium ${checkoutToPurchaseStatus === 'good' ? 'text-green-600' : checkoutToPurchaseStatus === 'warning' ? 'text-amber-600' : 'text-red-600'}`}>
+                    {checkoutToPurchase}%
+                  </div>
                 </div>
-                <div className="text-xs text-gray-500 mt-1">Benchmark: 60-75% • Status: Critical</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Benchmark: {benchmarks.checkoutToPurchase.min}-{benchmarks.checkoutToPurchase.max}% • Status: {checkoutToPurchaseStatus === 'good' ? 'Good ✓' : checkoutToPurchaseStatus === 'warning' ? 'Below ⚠' : 'Critical ✗'}
+                </div>
               </div>
               <div className="w-48">
                 <div className="text-sm font-medium text-gray-700">Purchases</div>
@@ -337,31 +413,101 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Primary Concern */}
-          <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 text-red-600">
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-red-900 mb-1">Primary Concern: Checkout → Purchase ({checkoutToPurchase}%)</h3>
-                <p className="text-sm text-red-800 mb-2">
-                  Your checkout-to-purchase rate is critically below the 60-75% benchmark. This is where you're losing the most revenue.
-                </p>
-                <div className="text-sm text-red-900">
-                  <p className="font-medium mb-1">Recommended actions:</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>Review payment options and checkout process for friction</li>
-                    <li>Add trust signals (security badges, guarantees)</li>
-                    <li>Test free shipping thresholds</li>
-                    <li>Optimize mobile checkout experience</li>
-                  </ul>
+          {/* Optimization Opportunities */}
+          {problematicStages.length > 0 ? (
+            <div className="mt-6 space-y-3">
+              <h3 className="font-bold text-gray-900">Optimization Opportunities</h3>
+              {problematicStages.map((stage, idx) => {
+                const isCritical = stage.severity === 'critical'
+                const bgColor = isCritical ? 'bg-red-50' : 'bg-amber-50'
+                const borderColor = isCritical ? 'border-red-200' : 'border-amber-200'
+                const textColor = isCritical ? 'text-red-900' : 'text-amber-900'
+                const iconColor = isCritical ? 'text-red-600' : 'text-amber-600'
+
+                // Generate specific recommendations based on stage
+                const getRecommendations = () => {
+                  switch (stage.name) {
+                    case 'CTR':
+                      return [
+                        'Test new ad creative - refresh imagery and messaging',
+                        'Refine audience targeting - exclude poor performers',
+                        'A/B test ad copy focusing on benefits over features',
+                        'Review ad placement - may be showing in low-intent contexts'
+                      ]
+                    case 'Click→ATC':
+                      return [
+                        'Check page load speed - every second costs 7% conversions',
+                        'Add more product images showing product in use',
+                        'Include customer reviews and ratings prominently',
+                        'Test pricing display and value propositions',
+                        'Optimize for mobile - 60%+ of traffic is mobile'
+                      ]
+                    case 'ATC→Checkout':
+                      return [
+                        'Show shipping costs earlier (on product page or cart)',
+                        'Offer guest checkout - reduce account creation friction',
+                        'Add trust badges (security, money-back guarantee)',
+                        'Implement express checkout (Apple Pay, Shop Pay)',
+                        'Test progress indicator in checkout flow'
+                      ]
+                    case 'Checkout→Purchase':
+                      return [
+                        'Set up cart abandonment emails - highly qualified users',
+                        'Add inline form validation with helpful error messages',
+                        'Display order summary alongside payment form',
+                        'Test payment processor - ensure mobile wallets work',
+                        'Add "What happens next" message near submit button'
+                      ]
+                    default:
+                      return []
+                  }
+                }
+
+                return (
+                  <div key={idx} className={`${bgColor} border ${borderColor} rounded-lg p-4`}>
+                    <div className="flex items-start gap-3">
+                      <div className={`flex-shrink-0 ${iconColor}`}>
+                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isCritical ? "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" : "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"} />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className={`font-bold ${textColor} mb-1`}>
+                          {idx === 0 && isCritical ? 'Priority: ' : ''}{stage.name} ({stage.value.toFixed(1)}%)
+                        </h4>
+                        <p className={`text-sm ${textColor} mb-2`}>
+                          {isCritical ? 'Critically' : 'Currently'} below the {stage.benchmark.min}-{stage.benchmark.max}% benchmark.
+                          {isCritical && idx === 0 ? ' This is your highest-impact optimization opportunity.' : ''}
+                        </p>
+                        <div className={`text-sm ${textColor}`}>
+                          <p className="font-medium mb-1">Quick wins to test:</p>
+                          <ul className="list-disc list-inside space-y-1">
+                            {getRecommendations().slice(0, 3).map((rec, i) => (
+                              <li key={i}>{rec}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 text-green-600">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="font-bold text-green-900">Funnel Health: Excellent</h3>
+                  <p className="text-sm text-green-800">All conversion stages are meeting or exceeding industry benchmarks.</p>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </section>
 
         {/* Metrics Cards */}
