@@ -22,8 +22,16 @@ export default function DashboardPage() {
         if (response.ok) {
           const data = await response.json()
           setAdAccounts(data.accounts)
-          if (data.accounts.length > 0) {
+
+          // Try to restore previously selected account from localStorage
+          const savedAccountId = localStorage.getItem('selectedAdAccountId')
+          const savedAccount = data.accounts.find((acc: any) => acc.id === savedAccountId)
+
+          if (savedAccount) {
+            setSelectedAccount(savedAccountId)
+          } else if (data.accounts.length > 0) {
             setSelectedAccount(data.accounts[0].id)
+            localStorage.setItem('selectedAdAccountId', data.accounts[0].id)
           }
         }
       } catch (error) {
@@ -198,7 +206,11 @@ export default function DashboardPage() {
               {adAccounts.length > 1 && (
                 <select
                   value={selectedAccount || ''}
-                  onChange={(e) => setSelectedAccount(e.target.value)}
+                  onChange={(e) => {
+                    const newAccountId = e.target.value
+                    setSelectedAccount(newAccountId)
+                    localStorage.setItem('selectedAdAccountId', newAccountId)
+                  }}
                   className="px-4 py-2 border border-gray-300 rounded-lg text-sm"
                 >
                   {adAccounts.map(account => (

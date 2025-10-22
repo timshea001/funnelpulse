@@ -6,9 +6,9 @@ import { MetaAPI } from '@/lib/meta-api'
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth()
+    const { userId: clerkUserId } = await auth()
 
-    if (!userId) {
+    if (!clerkUserId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -22,11 +22,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get database user ID from Clerk ID
+    const user = await db.user.findUnique({
+      where: { clerkId: clerkUserId },
+      select: { id: true }
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
     // Get the ad account from database
     const adAccount = await db.adAccount.findFirst({
       where: {
         id: accountId,
-        userId,
+        userId: user.id,
         isActive: true
       }
     })
