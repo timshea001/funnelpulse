@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useUser } from '@clerk/nextjs'
 
@@ -9,6 +9,7 @@ export default function OnboardingPage() {
   const { user } = useUser()
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true)
 
   // Form state
   const [businessContext, setBusinessContext] = useState({
@@ -16,6 +17,29 @@ export default function OnboardingPage() {
     businessModel: 'B2C' as 'B2C' | 'B2B' | 'D2C',
     primaryGoal: 'purchases' as 'purchases' | 'leads' | 'app_installs' | 'brand_awareness',
   })
+
+  // Check if user has already completed onboarding
+  useEffect(() => {
+    async function checkOnboardingStatus() {
+      try {
+        const response = await fetch('/api/user/profile')
+        if (response.ok) {
+          const data = await response.json()
+          // If user has industry set, they've completed onboarding
+          if (data.user?.industry) {
+            router.push('/dashboard')
+            return
+          }
+        }
+      } catch (error) {
+        console.error('Error checking onboarding status:', error)
+      } finally {
+        setCheckingOnboarding(false)
+      }
+    }
+
+    checkOnboardingStatus()
+  }, [])
 
   const [productEconomics, setProductEconomics] = useState({
     averageOrderValue: 0,
@@ -83,6 +107,14 @@ export default function OnboardingPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (checkingOnboarding) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    )
   }
 
   return (

@@ -176,8 +176,8 @@ export default function DashboardPage() {
         <div className="text-center">
           <h2 className="text-xl font-bold text-gray-900 mb-4">No Ad Accounts Connected</h2>
           <p className="text-gray-600 mb-6">Connect your Meta Ads account to get started</p>
-          <button onClick={() => router.push('/onboarding')} className="btn-primary">
-            Connect Account
+          <button onClick={() => window.location.href = '/api/meta/authorize'} className="btn-primary">
+            Connect Meta Account
           </button>
         </div>
       </div>
