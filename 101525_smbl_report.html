@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The SMBL - Account Performance Report</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        header {
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 20px;
+            margin-bottom: 12px;
+            color: #555;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        th {
+            background: #f8f8f8;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #ddd;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background: #fafafa;
+        }
+
+        .metric-highlight {
+            font-weight: 600;
+        }
+
+        .status-good {
+            color: #2e7d32;
+        }
+
+        .status-warning {
+            color: #c62828;
+        }
+
+        .note {
+            font-style: italic;
+            color: #666;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ACCOUNT PERFORMANCE | Oct 8-14, 2025</h1>
+            <div class="subtitle">The SMBL</div>
+        </header>
+
+        <div class="section">
+            <h2>Overall Metrics</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="metric-highlight">Total Spend</td>
+                        <td>$1,578.67</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-highlight">Revenue</td>
+                        <td>$1,586.88</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-highlight">Purchases</td>
+                        <td>9</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-highlight">ROAS</td>
+                        <td>1.01x</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-highlight">CPA</td>
+                        <td>$175.41</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="note">LTV Projections: NA</div>
+        </div>
+
+        <div class="section">
+            <h2>Ad Set Performance Metrics</h2>
+
+            <h3>Campaign: CD Prospecting Interests Test - Skyward Hoodie - CBO</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ad Set</th>
+                        <th>Spend</th>
+                        <th>CTR</th>
+                        <th>CPM</th>
+                        <th>Link Click CPC</th>
+                        <th>ATCs</th>
+                        <th>Purchases</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>35m_US_Surf+top 5% Income</td>
+                        <td>$613.54</td>
+                        <td>1.24%</td>
+                        <td>$59.64</td>
+                        <td>$4.79</td>
+                        <td>8</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>35m_US_Surf+top 5% Income_adv+ON</td>
+                        <td>$558.00</td>
+                        <td>1.66%</td>
+                        <td>$57.21</td>
+                        <td>$3.44</td>
+                        <td>8</td>
+                        <td>5</td>
+                    </tr>
+                    <tr>
+                        <td>28m_top 10% Income_adv+ON</td>
+                        <td>$33.89</td>
+                        <td>1.78%</td>
+                        <td>$43.06</td>
+                        <td>$2.42</td>
+                        <td>0</td>
+                        <td>0</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Campaign: Prospecting_Fall_Sale_Best_Creative</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ad Set</th>
+                        <th>Spend</th>
+                        <th>CTR</th>
+                        <th>CPM</th>
+                        <th>Link Click CPC</th>
+                        <th>ATCs</th>
+                        <th>Purchases</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>35m_US_Surf+top 5% Income_adv+ON_sale</td>
+                        <td>$248.17</td>
+                        <td>1.48%</td>
+                        <td>$46.04</td>
+                        <td>$3.10</td>
+                        <td>6</td>
+                        <td>2</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Campaign: BOF - Catalog</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ad Set</th>
+                        <th>Spend</th>
+                        <th>CTR</th>
+                        <th>CPM</th>
+                        <th>Link Click CPC</th>
+                        <th>ATCs</th>
+                        <th>Purchases</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>recent visits_video_views</td>
+                        <td>$125.07</td>
+                        <td>1.19%</td>
+                        <td>$51.38</td>
+                        <td>$4.31</td>
+                        <td>5</td>
+                        <td>1</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Creative Performance by Audience</h2>
+            <h3>Top 10 Creative + Audience Combinations</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Creative</th>
+                        <th>Audience</th>
+                        <th>Spend</th>
+                        <th>CTR</th>
+                        <th>CPM</th>
+                        <th>Link Click CPC</th>
+                        <th>ATCs</th>
+                        <th>Purchases</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>VID_SKYWARD15SEC</td>
+                        <td>35m_US_Surf+top 5% Income</td>
+                        <td>$354.79</td>
+                        <td>1.32%</td>
+                        <td>$67.06</td>
+                        <td>$5.07</td>
+                        <td>2</td>
+                        <td>0</td>
+                    </tr>
+                    <tr>
+                        <td>VID_SKYWARD15SEC</td>
+                        <td>35m_US_Surf+top 5% Income_adv+ON</td>
+                        <td>$351.90</td>
+                        <td>2.27%</td>
+                        <td>$94.02</td>
+                        <td>$4.14</td>
+                        <td>3</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>Skyward_hoodie_review - Copy</td>
+                        <td>35m_US_Surf+top 5% Income</td>
+                        <td>$181.60</td>
+                        <td>1.24%</td>
+                        <td>$56.29</td>
+                        <td>$4.54</td>
+                        <td>4</td>
+                        <td>0</td>
+                    </tr>
+                    <tr>
+                        <td>Skyward_hoodie_review</td>
+                        <td>35m_US_Surf+top 5% Income_adv+ON</td>
+                        <td>$149.19</td>
+                        <td>1.24%</td>
+                        <td>$34.38</td>
+                        <td>$2.76</td>
+                        <td>3</td>
+                        <td>3</td>
+                    </tr>
+                    <tr>
+                        <td>Skyward_hoodie_review_fall25</td>
+                        <td>35m_US_Surf+top 5% Income_adv+ON_sale</td>
+                        <td>$130.34</td>
+                        <td>2.12%</td>
+                        <td>$53.05</td>
+                        <td>$2.51</td>
+                        <td>5</td>
+                        <td>2</td>
+                    </tr>
+                    <tr>
+                        <td>bof_catalog_fall_sale</td>
+                        <td>recent visits_video_views</td>
+                        <td>$125.07</td>
+                        <td>1.19%</td>
+                        <td>$51.38</td>
+                        <td>$4.31</td>
+                        <td>5</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td>Skyward_hoodie_review_fall25 - Copy</td>
+                        <td>35m_US_Surf+top 5% Income_adv+ON_sale</td>
+                        <td>$53.05</td>
+                        <td>1.07%</td>
+                        <td>$56.98</td>
+                        <td>$5.31</td>
+                        <td>0</td>
+                        <td>0</td>
+                    </tr>
+                    <tr>
+                        <td>Fall25_Carousel</td>
+                        <td>35m_US_Surf+top 5% Income_adv+ON_sale</td>
+                        <td>$46.35</td>
+                        <td>0.90%</td>
+                        <td>$32.03</td>
+                        <td>$3.57</td>
+                        <td>1</td>
+                        <td>0</td>
+                    </tr>
+                    <tr>
+                        <td>Skyward_hoodie_Finally_a_sunhoodie_that_fits</td>
+                        <td>35m_US_Surf+top 5% Income_adv+ON</td>
+                        <td>$41.54</td>
+                        <td>1.11%</td>
+                        <td>$28.91</td>
+                        <td>$2.60</td>
+                        <td>1</td>
+                        <td>0</td>
+                    </tr>
+                    <tr>
+                        <td>Skyward_hoodie_Finally_a_sunhoodie_that_fits - Copy</td>
+                        <td>35m_US_Surf+top 5% Income</td>
+                        <td>$38.66</td>
+                        <td>0.81%</td>
+                        <td>$44.69</td>
+                        <td>$5.52</td>
+                        <td>0</td>
+                        <td>0</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Funnel Activity</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Stage</th>
+                        <th>Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="metric-highlight">Link Clicks</td>
+                        <td>314</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-highlight">Add to Carts</td>
+                        <td>27</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-highlight">Checkouts Initiated</td>
+                        <td>20</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-highlight">Purchases</td>
+                        <td>9</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Conversion Rates vs. E-commerce Benchmarks</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Current (7D)</th>
+                        <th>Historical</th>
+                        <th>E-com Target</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="metric-highlight">Click → Add to Cart</td>
+                        <td>8.6%</td>
+                        <td>7.5%</td>
+                        <td>8-12%</td>
+                        <td>Within target (slight uptick / low end of target)</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-highlight">ATC → Checkout</td>
+                        <td>74.1%</td>
+                        <td>56.7%</td>
+                        <td>45-60%</td>
+                        <td>Above target (up from historical)</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-highlight">Checkout → Purchase</td>
+                        <td>45.0%</td>
+                        <td>52.9%</td>
+                        <td>60-75%</td>
+                        <td>Below target (down from historical)</td>
+                    </tr>
+                    <tr>
+                        <td class="metric-highlight">Overall ATC → Purchase</td>
+                        <td>33.3%</td>
+                        <td>30.0%</td>
+                        <td>25-35%</td>
+                        <td>Within target (up from historical)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

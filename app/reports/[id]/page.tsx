@@ -24,16 +24,25 @@ export default function ReportPage() {
   const [report, setReport] = useState<Report | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
-    async function fetchReport() {
+    async function fetchData() {
       try {
-        const response = await fetch(`/api/reports/${params.id}`)
-        if (!response.ok) {
+        // Fetch report
+        const reportResponse = await fetch(`/api/reports/${params.id}`)
+        if (!reportResponse.ok) {
           throw new Error('Failed to fetch report')
         }
-        const data = await response.json()
-        setReport(data.report)
+        const reportData = await reportResponse.json()
+        setReport(reportData.report)
+
+        // Fetch user profile for benchmarks
+        const userResponse = await fetch('/api/user/profile')
+        if (userResponse.ok) {
+          const userData = await userResponse.json()
+          setUser(userData.user)
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error')
       } finally {
@@ -41,7 +50,7 @@ export default function ReportPage() {
       }
     }
 
-    fetchReport()
+    fetchData()
   }, [params.id])
 
   if (loading) {
@@ -66,234 +75,252 @@ export default function ReportPage() {
   }
 
   const data = report.dataSnapshot
+  const metrics = report.calculatedMetrics
   const insights = report.insights
+
+  // Calculate conversion rates
+  const clicks = data.summary.clicks || 0
+  const addToCarts = data.summary.addToCarts || 0
+  const checkouts = data.summary.initiateCheckouts || 0
+  const purchases = data.summary.purchases || 0
+
+  const clickToATC = clicks > 0 ? (addToCarts / clicks) * 100 : 0
+  const atcToCheckout = addToCarts > 0 ? (checkouts / addToCarts) * 100 : 0
+  const checkoutToPurchase = checkouts > 0 ? (purchases / checkouts) * 100 : 0
+  const overallAtcToPurchase = addToCarts > 0 ? (purchases / addToCarts) * 100 : 0
+
+  // E-commerce industry benchmarks
+  const benchmarks = {
+    clickToATC: { min: 8, max: 12 },
+    atcToCheckout: { min: 45, max: 60 },
+    checkoutToPurchase: { min: 60, max: 75 },
+    overallAtcToPurchase: { min: 25, max: 35 }
+  }
+
+  const getStatus = (value: number, benchmark: { min: number, max: number }) => {
+    if (value >= benchmark.min && value <= benchmark.max) {
+      return { text: 'Within target', class: 'text-green-600' }
+    } else if (value > benchmark.max) {
+      return { text: 'Above target', class: 'text-green-600' }
+    } else {
+      return { text: 'Below target', class: 'text-red-600' }
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 print:border-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                ACCOUNT PERFORMANCE | {new Date(report.dateRangeStart).toLocaleDateString()} - {new Date(report.dateRangeEnd).toLocaleDateString()}
-              </h1>
-              <p className="text-sm text-gray-500">{report.adAccount.accountName}</p>
-            </div>
-            <div className="flex gap-2 print:hidden">
-              <button
-                onClick={async () => {
-                  try {
-                    const response = await fetch(`/api/reports/${params.id}/pdf`)
-                    if (response.ok) {
-                      const blob = await response.blob()
-                      const url = window.URL.createObjectURL(blob)
-                      const a = document.createElement('a')
-                      a.href = url
-                      a.download = `report-${new Date().toISOString().split('T')[0]}.pdf`
-                      document.body.appendChild(a)
-                      a.click()
-                      window.URL.revokeObjectURL(url)
-                      document.body.removeChild(a)
-                    } else {
-                      alert('Failed to generate PDF')
-                    }
-                  } catch (error) {
-                    console.error('PDF export error:', error)
-                    alert('Failed to generate PDF')
-                  }
-                }}
-                className="btn-primary"
-              >
-                Export PDF
-              </button>
-              <button onClick={() => router.push('/dashboard')} className="btn-secondary">
-                Back to Dashboard
-              </button>
-            </div>
-          </div>
+      <style jsx global>{`
+        @media print {
+          body { background: white; }
+          .print\\:hidden { display: none; }
+          .container { box-shadow: none; }
+        }
+      `}</style>
+
+      {/* Print/Download buttons */}
+      <div className="max-w-7xl mx-auto px-4 py-4 print:hidden">
+        <div className="flex justify-end gap-2">
+          <button onClick={() => window.print()} className="btn-secondary">
+            Print Report
+          </button>
+          <button onClick={() => router.push('/dashboard')} className="btn-secondary">
+            Back to Dashboard
+          </button>
         </div>
-      </header>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Overall Metrics */}
-        <section className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Overall Metrics</h2>
+      {/* Report Container */}
+      <div className="max-w-7xl mx-auto px-4 pb-8">
+        <div className="bg-white p-10 shadow">
+          {/* Header */}
+          <header className="border-b-2 border-gray-900 pb-5 mb-8">
+            <h1 className="text-3xl font-semibold mb-2">
+              ACCOUNT PERFORMANCE | {new Date(report.dateRangeStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(report.dateRangeEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </h1>
+            <div className="text-gray-600 text-base">{report.adAccount.accountName}</div>
+          </header>
 
-          <table className="w-full">
-            <thead>
-              <tr className="border-b-2 border-gray-200">
-                <th className="text-left py-3 font-semibold text-gray-900">Metric</th>
-                <th className="text-left py-3 font-semibold text-gray-900">Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b border-gray-100">
-                <td className="py-3 font-medium text-gray-700">Total Spend</td>
-                <td className="py-3 text-gray-900">{formatCurrency(data.summary.spend)}</td>
-              </tr>
-              <tr className="border-b border-gray-100">
-                <td className="py-3 font-medium text-gray-700">Revenue</td>
-                <td className="py-3 text-gray-900">{formatCurrency(data.summary.revenue)}</td>
-              </tr>
-              <tr className="border-b border-gray-100">
-                <td className="py-3 font-medium text-gray-700">Purchases</td>
-                <td className="py-3 text-gray-900">{data.summary.purchases}</td>
-              </tr>
-              <tr className="border-b border-gray-100">
-                <td className="py-3 font-medium text-gray-700">ROAS</td>
-                <td className="py-3 text-gray-900">{data.summary.roas.toFixed(2)}x</td>
-              </tr>
-              <tr>
-                <td className="py-3 font-medium text-gray-700">CPA</td>
-                <td className="py-3 text-gray-900">{formatCurrency(data.summary.cpa)}</td>
-              </tr>
-            </tbody>
-          </table>
-
-          {/* Profitability Status */}
-          {data.profitability && (
-            <div className={`mt-6 rounded-lg border p-4 ${
-              data.profitability.isProfitable
-                ? 'bg-green-50 border-green-200'
-                : 'bg-red-50 border-red-200'
-            }`}>
-              <h3 className={`font-bold mb-2 ${
-                data.profitability.isProfitable ? 'text-green-900' : 'text-red-900'
-              }`}>
-                {data.profitability.isProfitable ? '✓ Profitable' : '⚠️ PROFITABILITY ALERT'}
-              </h3>
-              <div className={`text-sm ${
-                data.profitability.isProfitable ? 'text-green-800' : 'text-red-800'
-              }`}>
-                <p>Break-even CPA: {formatCurrency(data.profitability.breakEvenCPA)}</p>
-                <p>Current CPA: {formatCurrency(data.summary.cpa)}</p>
-                <p>Target ROAS: {data.profitability.targetROAS.toFixed(2)}x+</p>
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* Funnel Health Analysis */}
-        {data.funnel && (
-          <section className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Funnel Health Analysis</h2>
-
-            <div className="space-y-4">
-              {[
-                { label: 'Impressions', value: data.funnel.impressions },
-                { label: 'Clicks', value: data.funnel.clicks, rate: data.conversionRates.ctr, rateName: 'CTR' },
-                { label: 'Page Views', value: data.funnel.pageViews },
-                { label: 'Add to Carts', value: data.funnel.addToCarts, rate: data.conversionRates.clickToAtc, rateName: 'Click→ATC' },
-                { label: 'Checkouts', value: data.funnel.checkouts, rate: data.conversionRates.atcToCheckout, rateName: 'ATC→Checkout' },
-                { label: 'Purchases', value: data.funnel.purchases, rate: data.conversionRates.checkoutToPurchase, rateName: 'Checkout→Purchase' }
-              ].map((stage, index) => (
-                <div key={stage.label} className="flex items-center gap-4">
-                  <div className="w-48">
-                    <div className="text-sm font-medium text-gray-700">{stage.label}</div>
-                    <div className="text-xl font-bold text-gray-900">{formatNumber(stage.value)}</div>
-                  </div>
-                  {stage.rate !== undefined && (
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-600">{stage.rateName}: {formatPercentage(stage.rate)}</div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* AI Insights */}
-            {insights?.primary && (
-              <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="font-bold text-blue-900 mb-2">Key Insight</h3>
-                <p className="text-sm text-blue-800">{insights.primary}</p>
-                {insights.recommendations && insights.recommendations.length > 0 && (
-                  <div className="mt-3">
-                    <p className="text-sm font-medium text-blue-900 mb-1">Recommended Actions:</p>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-blue-800">
-                      {insights.recommendations.map((rec: string, i: number) => (
-                        <li key={i}>{rec}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+          {/* Overall Metrics */}
+          <section className="mb-10">
+            <h2 className="text-xl font-semibold mb-5 pb-2 border-b border-gray-300">Overall Metrics</h2>
+            <table className="w-full border-collapse mb-6">
+              <thead>
+                <tr>
+                  <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Metric</th>
+                  <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="hover:bg-gray-50">
+                  <td className="p-3 border-b border-gray-200 font-semibold">Total Spend</td>
+                  <td className="p-3 border-b border-gray-200">{formatCurrency(data.summary.spend)}</td>
+                </tr>
+                <tr className="hover:bg-gray-50">
+                  <td className="p-3 border-b border-gray-200 font-semibold">Revenue</td>
+                  <td className="p-3 border-b border-gray-200">{formatCurrency(data.summary.revenue)}</td>
+                </tr>
+                <tr className="hover:bg-gray-50">
+                  <td className="p-3 border-b border-gray-200 font-semibold">Purchases</td>
+                  <td className="p-3 border-b border-gray-200">{formatNumber(purchases)}</td>
+                </tr>
+                <tr className="hover:bg-gray-50">
+                  <td className="p-3 border-b border-gray-200 font-semibold">ROAS</td>
+                  <td className="p-3 border-b border-gray-200">{(data.summary.spend > 0 ? (data.summary.revenue / data.summary.spend) : 0).toFixed(2)}x</td>
+                </tr>
+                <tr className="hover:bg-gray-50">
+                  <td className="p-3 border-b border-gray-200 font-semibold">CPA</td>
+                  <td className="p-3 border-b border-gray-200">{purchases > 0 ? formatCurrency(data.summary.spend / purchases) : 'N/A'}</td>
+                </tr>
+              </tbody>
+            </table>
+            {user?.hasRepeatPurchases && (
+              <div className="text-sm italic text-gray-600">
+                LTV Projections: {user.repeatPurchaseFrequency || 'N/A'}
               </div>
             )}
           </section>
-        )}
 
-        {/* Campaign Performance */}
-        {data.campaigns && data.campaigns.length > 0 && (
-          <section className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Campaign Performance</h2>
+          {/* Campaign Performance - Only if we have campaign level data */}
+          {data.campaigns && data.campaigns.length > 0 && (
+            <section className="mb-10">
+              <h2 className="text-xl font-semibold mb-5 pb-2 border-b border-gray-300">Campaign Performance Metrics</h2>
+              {data.campaigns.map((campaign: any, idx: number) => (
+                <div key={idx} className="mb-6">
+                  <h3 className="text-base font-semibold mb-3 text-gray-700">Campaign: {campaign.name}</h3>
+                  <table className="w-full border-collapse mb-6">
+                    <thead>
+                      <tr>
+                        <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Ad Set</th>
+                        <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Spend</th>
+                        <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">CTR</th>
+                        <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">CPM</th>
+                        <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Link Click CPC</th>
+                        <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">ATCs</th>
+                        <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Purchases</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {campaign.adsets?.map((adset: any, adsetIdx: number) => (
+                        <tr key={adsetIdx} className="hover:bg-gray-50">
+                          <td className="p-3 border-b border-gray-200">{adset.name}</td>
+                          <td className="p-3 border-b border-gray-200">{formatCurrency(adset.spend)}</td>
+                          <td className="p-3 border-b border-gray-200">{formatPercentage(adset.ctr)}</td>
+                          <td className="p-3 border-b border-gray-200">{formatCurrency(adset.cpm)}</td>
+                          <td className="p-3 border-b border-gray-200">{formatCurrency(adset.cpc)}</td>
+                          <td className="p-3 border-b border-gray-200">{formatNumber(adset.addToCarts)}</td>
+                          <td className="p-3 border-b border-gray-200">{formatNumber(adset.purchases)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </section>
+          )}
 
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b-2 border-gray-200">
-                    <th className="text-left py-3 px-2 font-semibold text-gray-900">Campaign</th>
-                    <th className="text-right py-3 px-2 font-semibold text-gray-900">Spend</th>
-                    <th className="text-right py-3 px-2 font-semibold text-gray-900">CTR</th>
-                    <th className="text-right py-3 px-2 font-semibold text-gray-900">CPC</th>
-                    <th className="text-right py-3 px-2 font-semibold text-gray-900">Purchases</th>
-                    <th className="text-right py-3 px-2 font-semibold text-gray-900">CPA</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.campaigns.map((campaign: any, i: number) => (
-                    <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-2 text-gray-900">{campaign.campaign_name || 'Unknown'}</td>
-                      <td className="py-3 px-2 text-right text-gray-900">{formatCurrency(campaign.spend)}</td>
-                      <td className="py-3 px-2 text-right text-gray-900">{formatPercentage(campaign.ctr)}</td>
-                      <td className="py-3 px-2 text-right text-gray-900">{formatCurrency(campaign.cpc)}</td>
-                      <td className="py-3 px-2 text-right text-gray-900">{campaign.purchases}</td>
-                      <td className="py-3 px-2 text-right text-gray-900">
-                        {campaign.cpa ? formatCurrency(campaign.cpa) : 'N/A'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {/* Funnel Activity */}
+          <section className="mb-10">
+            <h2 className="text-xl font-semibold mb-5 pb-2 border-b border-gray-300">Funnel Activity</h2>
+            <table className="w-full border-collapse mb-6">
+              <thead>
+                <tr>
+                  <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Stage</th>
+                  <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="hover:bg-gray-50">
+                  <td className="p-3 border-b border-gray-200 font-semibold">Link Clicks</td>
+                  <td className="p-3 border-b border-gray-200">{formatNumber(clicks)}</td>
+                </tr>
+                <tr className="hover:bg-gray-50">
+                  <td className="p-3 border-b border-gray-200 font-semibold">Add to Carts</td>
+                  <td className="p-3 border-b border-gray-200">{formatNumber(addToCarts)}</td>
+                </tr>
+                <tr className="hover:bg-gray-50">
+                  <td className="p-3 border-b border-gray-200 font-semibold">Checkouts Initiated</td>
+                  <td className="p-3 border-b border-gray-200">{formatNumber(checkouts)}</td>
+                </tr>
+                <tr className="hover:bg-gray-50">
+                  <td className="p-3 border-b border-gray-200 font-semibold">Purchases</td>
+                  <td className="p-3 border-b border-gray-200">{formatNumber(purchases)}</td>
+                </tr>
+              </tbody>
+            </table>
           </section>
-        )}
 
-        {/* Ad Set Performance */}
-        {data.adsets && data.adsets.length > 0 && (
-          <section className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Ad Set Performance</h2>
-
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b-2 border-gray-200">
-                    <th className="text-left py-3 px-2 font-semibold text-gray-900">Ad Set</th>
-                    <th className="text-right py-3 px-2 font-semibold text-gray-900">Spend</th>
-                    <th className="text-right py-3 px-2 font-semibold text-gray-900">CTR</th>
-                    <th className="text-right py-3 px-2 font-semibold text-gray-900">CPM</th>
-                    <th className="text-right py-3 px-2 font-semibold text-gray-900">CPC</th>
-                    <th className="text-right py-3 px-2 font-semibold text-gray-900">ATCs</th>
-                    <th className="text-right py-3 px-2 font-semibold text-gray-900">Purchases</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.adsets.map((adset: any, i: number) => (
-                    <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-2 text-gray-900">{adset.adset_name || 'Unknown'}</td>
-                      <td className="py-3 px-2 text-right text-gray-900">{formatCurrency(adset.spend)}</td>
-                      <td className="py-3 px-2 text-right text-gray-900">{formatPercentage(adset.ctr)}</td>
-                      <td className="py-3 px-2 text-right text-gray-900">{formatCurrency(adset.cpm)}</td>
-                      <td className="py-3 px-2 text-right text-gray-900">{formatCurrency(adset.cpc)}</td>
-                      <td className="py-3 px-2 text-right text-gray-900">{adset.addToCarts || 0}</td>
-                      <td className="py-3 px-2 text-right text-gray-900">{adset.purchases || 0}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {/* Conversion Rates vs Benchmarks */}
+          <section className="mb-10">
+            <h2 className="text-xl font-semibold mb-5 pb-2 border-b border-gray-300">
+              Conversion Rates vs. E-commerce Benchmarks
+            </h2>
+            <table className="w-full border-collapse mb-6">
+              <thead>
+                <tr>
+                  <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Metric</th>
+                  <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Current</th>
+                  <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">E-com Target</th>
+                  <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="hover:bg-gray-50">
+                  <td className="p-3 border-b border-gray-200 font-semibold">Click → Add to Cart</td>
+                  <td className="p-3 border-b border-gray-200">{clickToATC.toFixed(1)}%</td>
+                  <td className="p-3 border-b border-gray-200">{benchmarks.clickToATC.min}-{benchmarks.clickToATC.max}%</td>
+                  <td className={`p-3 border-b border-gray-200 ${getStatus(clickToATC, benchmarks.clickToATC).class}`}>
+                    {getStatus(clickToATC, benchmarks.clickToATC).text}
+                  </td>
+                </tr>
+                <tr className="hover:bg-gray-50">
+                  <td className="p-3 border-b border-gray-200 font-semibold">ATC → Checkout</td>
+                  <td className="p-3 border-b border-gray-200">{atcToCheckout.toFixed(1)}%</td>
+                  <td className="p-3 border-b border-gray-200">{benchmarks.atcToCheckout.min}-{benchmarks.atcToCheckout.max}%</td>
+                  <td className={`p-3 border-b border-gray-200 ${getStatus(atcToCheckout, benchmarks.atcToCheckout).class}`}>
+                    {getStatus(atcToCheckout, benchmarks.atcToCheckout).text}
+                  </td>
+                </tr>
+                <tr className="hover:bg-gray-50">
+                  <td className="p-3 border-b border-gray-200 font-semibold">Checkout → Purchase</td>
+                  <td className="p-3 border-b border-gray-200">{checkoutToPurchase.toFixed(1)}%</td>
+                  <td className="p-3 border-b border-gray-200">{benchmarks.checkoutToPurchase.min}-{benchmarks.checkoutToPurchase.max}%</td>
+                  <td className={`p-3 border-b border-gray-200 ${getStatus(checkoutToPurchase, benchmarks.checkoutToPurchase).class}`}>
+                    {getStatus(checkoutToPurchase, benchmarks.checkoutToPurchase).text}
+                  </td>
+                </tr>
+                <tr className="hover:bg-gray-50">
+                  <td className="p-3 border-b border-gray-200 font-semibold">Overall ATC → Purchase</td>
+                  <td className="p-3 border-b border-gray-200">{overallAtcToPurchase.toFixed(1)}%</td>
+                  <td className="p-3 border-b border-gray-200">{benchmarks.overallAtcToPurchase.min}-{benchmarks.overallAtcToPurchase.max}%</td>
+                  <td className={`p-3 border-b border-gray-200 ${getStatus(overallAtcToPurchase, benchmarks.overallAtcToPurchase).class}`}>
+                    {getStatus(overallAtcToPurchase, benchmarks.overallAtcToPurchase).text}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </section>
-        )}
-      </main>
+
+          {/* AI Insights */}
+          {insights && insights.length > 0 && (
+            <section className="mb-10">
+              <h2 className="text-xl font-semibold mb-5 pb-2 border-b border-gray-300">Key Insights & Recommendations</h2>
+              <div className="space-y-4">
+                {insights.map((insight: any, idx: number) => (
+                  <div key={idx} className="p-4 bg-gray-50 rounded border-l-4 border-blue-500">
+                    <h3 className="font-semibold mb-2">{insight.title}</h3>
+                    <p className="text-gray-700">{insight.description}</p>
+                    {insight.recommendation && (
+                      <p className="mt-2 text-sm text-gray-600">
+                        <span className="font-semibold">Recommendation:</span> {insight.recommendation}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
