@@ -78,11 +78,11 @@ export default function ReportPage() {
   const metrics = report.calculatedMetrics
   const insights = report.insights
 
-  // Calculate conversion rates
-  const clicks = data.summary.clicks || 0
-  const addToCarts = data.summary.addToCarts || 0
-  const checkouts = data.summary.initiateCheckouts || 0
-  const purchases = data.summary.purchases || 0
+  // Calculate conversion rates from funnel data (more reliable than summary)
+  const clicks = data.funnel?.clicks || data.summary.clicks || 0
+  const addToCarts = data.funnel?.addToCarts || data.summary.addToCarts || 0
+  const checkouts = data.funnel?.checkouts || data.summary.initiateCheckouts || 0
+  const purchases = data.funnel?.purchases || data.summary.purchases || 0
 
   const clickToATC = clicks > 0 ? (addToCarts / clicks) * 100 : 0
   const atcToCheckout = addToCarts > 0 ? (checkouts / addToCarts) * 100 : 0
@@ -180,43 +180,55 @@ export default function ReportPage() {
             )}
           </section>
 
-          {/* Campaign Performance - Only if we have campaign level data */}
-          {data.campaigns && data.campaigns.length > 0 && (
-            <section className="mb-10">
-              <h2 className="text-xl font-semibold mb-5 pb-2 border-b border-gray-300">Campaign Performance Metrics</h2>
-              {data.campaigns.map((campaign: any, idx: number) => (
-                <div key={idx} className="mb-6">
-                  <h3 className="text-base font-semibold mb-3 text-gray-700">Campaign: {campaign.name}</h3>
-                  <table className="w-full border-collapse mb-6">
-                    <thead>
-                      <tr>
-                        <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Ad Set</th>
-                        <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Spend</th>
-                        <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">CTR</th>
-                        <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">CPM</th>
-                        <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Link Click CPC</th>
-                        <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">ATCs</th>
-                        <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Purchases</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {campaign.adsets?.map((adset: any, adsetIdx: number) => (
-                        <tr key={adsetIdx} className="hover:bg-gray-50">
-                          <td className="p-3 border-b border-gray-200">{adset.name}</td>
-                          <td className="p-3 border-b border-gray-200">{formatCurrency(adset.spend)}</td>
-                          <td className="p-3 border-b border-gray-200">{formatPercentage(adset.ctr)}</td>
-                          <td className="p-3 border-b border-gray-200">{formatCurrency(adset.cpm)}</td>
-                          <td className="p-3 border-b border-gray-200">{formatCurrency(adset.cpc)}</td>
-                          <td className="p-3 border-b border-gray-200">{formatNumber(adset.addToCarts)}</td>
-                          <td className="p-3 border-b border-gray-200">{formatNumber(adset.purchases)}</td>
+          {/* Campaign Performance - Group adsets by campaign */}
+          {data.adsets && data.adsets.length > 0 && (() => {
+            // Group adsets by campaign
+            const campaignMap = new Map<string, any[]>()
+            data.adsets.forEach((adset: any) => {
+              const campaignName = adset.campaign_name || 'Unknown Campaign'
+              if (!campaignMap.has(campaignName)) {
+                campaignMap.set(campaignName, [])
+              }
+              campaignMap.get(campaignName)!.push(adset)
+            })
+
+            return (
+              <section className="mb-10">
+                <h2 className="text-xl font-semibold mb-5 pb-2 border-b border-gray-300">Ad Set Performance Metrics</h2>
+                {Array.from(campaignMap.entries()).map(([campaignName, adsets], idx) => (
+                  <div key={idx} className="mb-6">
+                    <h3 className="text-base font-semibold mb-3 text-gray-700">Campaign: {campaignName}</h3>
+                    <table className="w-full border-collapse mb-6">
+                      <thead>
+                        <tr>
+                          <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Ad Set</th>
+                          <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Spend</th>
+                          <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">CTR</th>
+                          <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">CPM</th>
+                          <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Link Click CPC</th>
+                          <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">ATCs</th>
+                          <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Purchases</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ))}
-            </section>
-          )}
+                      </thead>
+                      <tbody>
+                        {adsets.map((adset: any, adsetIdx: number) => (
+                          <tr key={adsetIdx} className="hover:bg-gray-50">
+                            <td className="p-3 border-b border-gray-200">{adset.adset_name || 'Unknown'}</td>
+                            <td className="p-3 border-b border-gray-200">{formatCurrency(adset.spend || 0)}</td>
+                            <td className="p-3 border-b border-gray-200">{formatPercentage(adset.ctr || 0)}</td>
+                            <td className="p-3 border-b border-gray-200">{formatCurrency(adset.cpm || 0)}</td>
+                            <td className="p-3 border-b border-gray-200">{formatCurrency(adset.cpc || 0)}</td>
+                            <td className="p-3 border-b border-gray-200">{formatNumber(adset.addToCarts || 0)}</td>
+                            <td className="p-3 border-b border-gray-200">{formatNumber(adset.purchases || 0)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ))}
+              </section>
+            )
+          })()}
 
           {/* Funnel Activity */}
           <section className="mb-10">
