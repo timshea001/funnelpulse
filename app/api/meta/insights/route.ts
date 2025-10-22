@@ -54,12 +54,15 @@ export async function POST(request: NextRequest) {
 
     // Fetch insights from Meta API
     const metaAPI = new MetaAPI(accessToken)
+    console.log(`Fetching insights for account ${adAccount.accountId}, ${startDate} to ${endDate}, level: ${level}`)
     const insights = await metaAPI.getInsights(
       adAccount.accountId,
       startDate,
       endDate,
       level
     )
+
+    console.log('Insights fetched:', JSON.stringify(insights, null, 2))
 
     // Update last synced timestamp
     await db.adAccount.update({
@@ -70,8 +73,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ insights })
   } catch (error) {
     console.error('Error fetching Meta insights:', error)
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to fetch insights' },
+      {
+        error: error instanceof Error ? error.message : 'Failed to fetch insights',
+        details: error instanceof Error ? error.stack : String(error)
+      },
       { status: 500 }
     )
   }
