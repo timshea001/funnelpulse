@@ -11,7 +11,9 @@ const isPublicRoute = createRouteMatcher([
   '/api/debug-env',
   '/api/debug/accounts',
   '/api/meta/callback',
-  '/api/meta/authorize'
+  '/api/meta/authorize',
+  '/api/meta/deauthorize',
+  '/api/meta/data-deletion'
 ])
 
 export default clerkMiddleware(async (auth, request) => {
