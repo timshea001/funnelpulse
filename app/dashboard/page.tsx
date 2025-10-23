@@ -346,7 +346,7 @@ export default function DashboardPage() {
             </div>
             <div className="text-2xl font-bold text-gray-900">{roas.toFixed(2)}x</div>
             <div className="text-xs text-gray-500 mt-1">
-              Target: {accountSettings?.targetROAS ? `${accountSettings.targetROAS}x` : '4.0x'}
+              Target: {accountSettings?.targetROAS ? `${Number(accountSettings.targetROAS).toFixed(2)}x` : '4.0x'}
             </div>
             {/* Tooltip */}
             <div className="absolute left-0 bottom-full mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
@@ -361,7 +361,7 @@ export default function DashboardPage() {
             </div>
             <div className="text-2xl font-bold text-gray-900">${cpa.toFixed(2)}</div>
             <div className="text-xs text-gray-500 mt-1">
-              Target: ${accountSettings?.targetCPA ? accountSettings.targetCPA.toFixed(2) : '30.00'}
+              Target: ${accountSettings?.targetCPA ? Number(accountSettings.targetCPA).toFixed(2) : '30.00'}
             </div>
             {/* Tooltip */}
             <div className="absolute left-0 bottom-full mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
