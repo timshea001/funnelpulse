@@ -380,54 +380,78 @@ export default function DashboardPage() {
             {/* Metrics Column */}
             <div className="flex-shrink-0 w-64 space-y-12">
               {/* CTR Metric */}
-              <div className="text-right pr-4">
+              <div className="text-right pr-4 group relative">
                 <div className={`text-3xl font-bold mb-1 ${ctrStatus === 'good' ? 'text-green-600' : ctrStatus === 'warning' ? 'text-amber-600' : 'text-red-600'}`}>
                   {ctr}%
                 </div>
-                <div className="text-sm text-gray-600 font-mono">
+                <div className="text-sm text-gray-600 font-mono flex items-center justify-end gap-1">
                   CTR
+                  <span className="text-xs text-gray-400 cursor-help">ⓘ</span>
                 </div>
                 <div className="text-xs text-gray-500 font-mono mt-1">
                   Target: {benchmarks.ctr.min}-{benchmarks.ctr.max}%
                 </div>
+                {/* Tooltip */}
+                <div className="absolute right-full mr-2 top-0 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                  Click-Through Rate - Percentage of people who see your ad and click on it. Higher CTR means your ad creative and targeting are resonating with your audience.
+                  <div className="absolute left-full top-4 w-0 h-0 border-t-4 border-b-4 border-l-4 border-transparent border-l-gray-900"></div>
+                </div>
               </div>
 
               {/* Click to ATC Metric */}
-              <div className="text-right pr-4 mt-16">
+              <div className="text-right pr-4 mt-16 group relative">
                 <div className={`text-3xl font-bold mb-1 ${clickToAtcStatus === 'good' ? 'text-green-600' : clickToAtcStatus === 'warning' ? 'text-amber-600' : 'text-red-600'}`}>
                   {clickToAtc}%
                 </div>
-                <div className="text-sm text-gray-600 font-mono">
+                <div className="text-sm text-gray-600 font-mono flex items-center justify-end gap-1">
                   Click → ATC
+                  <span className="text-xs text-gray-400 cursor-help">ⓘ</span>
                 </div>
                 <div className="text-xs text-gray-500 font-mono mt-1">
                   Target: {benchmarks.clickToAtc.min}-{benchmarks.clickToAtc.max}%
                 </div>
+                {/* Tooltip */}
+                <div className="absolute right-full mr-2 top-0 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                  Click to Add-to-Cart Rate - How many visitors add your product to cart after clicking your ad. This measures landing page effectiveness and product appeal.
+                  <div className="absolute left-full top-4 w-0 h-0 border-t-4 border-b-4 border-l-4 border-transparent border-l-gray-900"></div>
+                </div>
               </div>
 
               {/* ATC to Checkout Metric */}
-              <div className="text-right pr-4 mt-16">
+              <div className="text-right pr-4 mt-16 group relative">
                 <div className={`text-3xl font-bold mb-1 ${atcToCheckoutStatus === 'good' ? 'text-green-600' : atcToCheckoutStatus === 'warning' ? 'text-amber-600' : 'text-red-600'}`}>
                   {atcToCheckout}%
                 </div>
-                <div className="text-sm text-gray-600 font-mono">
+                <div className="text-sm text-gray-600 font-mono flex items-center justify-end gap-1">
                   ATC → Checkout
+                  <span className="text-xs text-gray-400 cursor-help">ⓘ</span>
                 </div>
                 <div className="text-xs text-gray-500 font-mono mt-1">
                   Target: {benchmarks.atcToCheckout.min}-{benchmarks.atcToCheckout.max}%
                 </div>
+                {/* Tooltip */}
+                <div className="absolute right-full mr-2 top-0 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                  Cart to Checkout Rate - Percentage of shoppers who start checkout after adding items to cart. Shipping costs and checkout friction are common blockers here.
+                  <div className="absolute left-full top-4 w-0 h-0 border-t-4 border-b-4 border-l-4 border-transparent border-l-gray-900"></div>
+                </div>
               </div>
 
               {/* Checkout to Purchase Metric */}
-              <div className="text-right pr-4 mt-16">
+              <div className="text-right pr-4 mt-16 group relative">
                 <div className={`text-3xl font-bold mb-1 ${checkoutToPurchaseStatus === 'good' ? 'text-green-600' : checkoutToPurchaseStatus === 'warning' ? 'text-amber-600' : 'text-red-600'}`}>
                   {checkoutToPurchase}%
                 </div>
-                <div className="text-sm text-gray-600 font-mono">
+                <div className="text-sm text-gray-600 font-mono flex items-center justify-end gap-1">
                   Checkout → Purchase
+                  <span className="text-xs text-gray-400 cursor-help">ⓘ</span>
                 </div>
                 <div className="text-xs text-gray-500 font-mono mt-1">
                   Target: {benchmarks.checkoutToPurchase.min}-{benchmarks.checkoutToPurchase.max}%
+                </div>
+                {/* Tooltip */}
+                <div className="absolute right-full mr-2 top-0 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                  Checkout Completion Rate - How many people complete their purchase after starting checkout. Payment issues, form errors, and trust concerns impact this metric.
+                  <div className="absolute left-full top-4 w-0 h-0 border-t-4 border-b-4 border-l-4 border-transparent border-l-gray-900"></div>
                 </div>
               </div>
             </div>

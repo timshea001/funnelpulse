@@ -25,6 +25,7 @@ export default function ReportPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [user, setUser] = useState<any>(null)
+  const [account, setAccount] = useState<any>(null)
 
   useEffect(() => {
     async function fetchData() {
@@ -42,6 +43,15 @@ export default function ReportPage() {
         if (userResponse.ok) {
           const userData = await userResponse.json()
           setUser(userData.user)
+        }
+
+        // Fetch account settings for goals
+        if (reportData.report?.adAccountId) {
+          const accountResponse = await fetch(`/api/ad-accounts/${reportData.report.adAccountId}`)
+          if (accountResponse.ok) {
+            const accountData = await accountResponse.json()
+            setAccount(accountData.account)
+          }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error')
@@ -262,34 +272,100 @@ export default function ReportPage() {
                 <tr>
                   <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Metric</th>
                   <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Value</th>
+                  {account && <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Target</th>}
+                  {account && <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Status</th>}
                 </tr>
               </thead>
               <tbody>
                 <tr className="hover:bg-gray-50">
                   <td className="p-3 border-b border-gray-200 font-semibold">Total Spend</td>
                   <td className="p-3 border-b border-gray-200">{formatCurrency(data.summary.spend)}</td>
+                  {account && <td className="p-3 border-b border-gray-200">-</td>}
+                  {account && <td className="p-3 border-b border-gray-200">-</td>}
                 </tr>
                 <tr className="hover:bg-gray-50">
                   <td className="p-3 border-b border-gray-200 font-semibold">Revenue</td>
                   <td className="p-3 border-b border-gray-200">{formatCurrency(data.summary.revenue)}</td>
+                  {account && <td className="p-3 border-b border-gray-200">-</td>}
+                  {account && <td className="p-3 border-b border-gray-200">-</td>}
                 </tr>
                 <tr className="hover:bg-gray-50">
                   <td className="p-3 border-b border-gray-200 font-semibold">Purchases</td>
                   <td className="p-3 border-b border-gray-200">{formatNumber(purchases)}</td>
+                  {account && <td className="p-3 border-b border-gray-200">-</td>}
+                  {account && <td className="p-3 border-b border-gray-200">-</td>}
                 </tr>
                 <tr className="hover:bg-gray-50">
                   <td className="p-3 border-b border-gray-200 font-semibold">ROAS</td>
-                  <td className="p-3 border-b border-gray-200">{(data.summary.spend > 0 ? (data.summary.revenue / data.summary.spend) : 0).toFixed(2)}x</td>
+                  <td className="p-3 border-b border-gray-200">
+                    {(() => {
+                      const actualROAS = data.summary.spend > 0 ? (data.summary.revenue / data.summary.spend) : 0
+                      return `${actualROAS.toFixed(2)}x`
+                    })()}
+                  </td>
+                  {account && (
+                    <td className="p-3 border-b border-gray-200">
+                      {account.targetROAS ? `${parseFloat(account.targetROAS).toFixed(2)}x` : 'Not set'}
+                    </td>
+                  )}
+                  {account && (
+                    <td className="p-3 border-b border-gray-200">
+                      {(() => {
+                        if (!account.targetROAS) return '-'
+                        const actualROAS = data.summary.spend > 0 ? (data.summary.revenue / data.summary.spend) : 0
+                        const target = parseFloat(account.targetROAS)
+                        if (actualROAS >= target) {
+                          return <span className="text-green-600 font-semibold">✓ On target</span>
+                        } else {
+                          const percentOff = ((target - actualROAS) / target * 100).toFixed(0)
+                          return <span className="text-red-600 font-semibold">⚠️ {percentOff}% below</span>
+                        }
+                      })()}
+                    </td>
+                  )}
                 </tr>
                 <tr className="hover:bg-gray-50">
                   <td className="p-3 border-b border-gray-200 font-semibold">CPA</td>
-                  <td className="p-3 border-b border-gray-200">{purchases > 0 ? formatCurrency(data.summary.spend / purchases) : 'N/A'}</td>
+                  <td className="p-3 border-b border-gray-200">
+                    {purchases > 0 ? formatCurrency(data.summary.spend / purchases) : 'N/A'}
+                  </td>
+                  {account && (
+                    <td className="p-3 border-b border-gray-200">
+                      {account.targetCPA ? formatCurrency(parseFloat(account.targetCPA)) : 'Not set'}
+                    </td>
+                  )}
+                  {account && (
+                    <td className="p-3 border-b border-gray-200">
+                      {(() => {
+                        if (!account.targetCPA || purchases === 0) return '-'
+                        const actualCPA = data.summary.spend / purchases
+                        const target = parseFloat(account.targetCPA)
+                        if (actualCPA <= target) {
+                          return <span className="text-green-600 font-semibold">✓ On target</span>
+                        } else {
+                          const percentOver = ((actualCPA - target) / target * 100).toFixed(0)
+                          return <span className="text-red-600 font-semibold">⚠️ {percentOver}% over</span>
+                        }
+                      })()}
+                    </td>
+                  )}
                 </tr>
               </tbody>
             </table>
-            {user?.hasRepeatPurchases && (
+            {account?.hasRepeatPurchases && (
               <div className="text-sm italic text-gray-600">
-                LTV Projections: {user.repeatPurchaseFrequency || 'N/A'}
+                LTV Multiplier: {account.ltvMultiplier ? `${parseFloat(account.ltvMultiplier).toFixed(1)}x` : 'N/A'} • Repeat Purchase Frequency: {account.repeatPurchaseFrequency || 'N/A'}
+              </div>
+            )}
+            {account && (account.breakEvenCPA || account.minimumROAS) && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded">
+                <h3 className="font-semibold text-sm mb-2">Business Context</h3>
+                <div className="text-sm text-gray-700 space-y-1">
+                  {account.averageOrderValue && <div>Average Order Value: {formatCurrency(parseFloat(account.averageOrderValue))}</div>}
+                  {account.profitMargin && <div>Profit Margin: {parseFloat(account.profitMargin).toFixed(1)}%</div>}
+                  {account.breakEvenCPA && <div>Break-even CPA: {formatCurrency(parseFloat(account.breakEvenCPA))}</div>}
+                  {account.minimumROAS && <div>Minimum ROAS: {parseFloat(account.minimumROAS).toFixed(2)}x</div>}
+                </div>
               </div>
             )}
           </section>
@@ -317,7 +393,16 @@ export default function ReportPage() {
                         <tr>
                           <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Ad Set</th>
                           <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Spend</th>
-                          <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">CTR</th>
+                          <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300 group relative">
+                            <span className="flex items-center gap-1">
+                              CTR
+                              <span className="text-xs text-gray-400 cursor-help print:hidden">ⓘ</span>
+                            </span>
+                            <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-64 p-3 bg-gray-900 text-white text-xs font-normal rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 print:hidden">
+                              Click-Through Rate - Percentage of people who see your ad and click on it. Industry benchmarks: 0.9-1.5% for most e-commerce. Higher CTR means your creative and targeting resonate.
+                              <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-gray-900"></div>
+                            </div>
+                          </th>
                           <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">CPM</th>
                           <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">Link Click CPC</th>
                           <th className="bg-gray-50 p-3 text-left font-semibold border-b-2 border-gray-300">ATCs</th>
@@ -435,32 +520,68 @@ export default function ReportPage() {
                 </tr>
               </thead>
               <tbody>
-                <tr className="hover:bg-gray-50">
-                  <td className="p-3 border-b border-gray-200 font-semibold">Click → Add to Cart</td>
+                <tr className="hover:bg-gray-50 group">
+                  <td className="p-3 border-b border-gray-200 font-semibold relative">
+                    <span className="flex items-center gap-1">
+                      Click → Add to Cart
+                      <span className="text-xs text-gray-400 cursor-help print:hidden">ⓘ</span>
+                    </span>
+                    <div className="absolute left-full ml-2 top-0 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 print:hidden">
+                      Percentage of people who click your ad and then add a product to their cart. This measures your product page effectiveness, pricing appeal, and product-market fit.
+                      <div className="absolute right-full top-4 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-gray-900"></div>
+                    </div>
+                  </td>
                   <td className="p-3 border-b border-gray-200">{clickToATC.toFixed(1)}%</td>
                   <td className="p-3 border-b border-gray-200">{benchmarks.clickToATC.min}-{benchmarks.clickToATC.max}%</td>
                   <td className={`p-3 border-b border-gray-200 ${getStatus(clickToATC, benchmarks.clickToATC).class}`}>
                     {getStatus(clickToATC, benchmarks.clickToATC).text}
                   </td>
                 </tr>
-                <tr className="hover:bg-gray-50">
-                  <td className="p-3 border-b border-gray-200 font-semibold">ATC → Checkout</td>
+                <tr className="hover:bg-gray-50 group">
+                  <td className="p-3 border-b border-gray-200 font-semibold relative">
+                    <span className="flex items-center gap-1">
+                      ATC → Checkout
+                      <span className="text-xs text-gray-400 cursor-help print:hidden">ⓘ</span>
+                    </span>
+                    <div className="absolute left-full ml-2 top-0 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 print:hidden">
+                      Percentage of cart adds that proceed to checkout. Low rates indicate cart abandonment issues like unexpected shipping costs, complex checkout, or trust concerns.
+                      <div className="absolute right-full top-4 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-gray-900"></div>
+                    </div>
+                  </td>
                   <td className="p-3 border-b border-gray-200">{atcToCheckout.toFixed(1)}%</td>
                   <td className="p-3 border-b border-gray-200">{benchmarks.atcToCheckout.min}-{benchmarks.atcToCheckout.max}%</td>
                   <td className={`p-3 border-b border-gray-200 ${getStatus(atcToCheckout, benchmarks.atcToCheckout).class}`}>
                     {getStatus(atcToCheckout, benchmarks.atcToCheckout).text}
                   </td>
                 </tr>
-                <tr className="hover:bg-gray-50">
-                  <td className="p-3 border-b border-gray-200 font-semibold">Checkout → Purchase</td>
+                <tr className="hover:bg-gray-50 group">
+                  <td className="p-3 border-b border-gray-200 font-semibold relative">
+                    <span className="flex items-center gap-1">
+                      Checkout → Purchase
+                      <span className="text-xs text-gray-400 cursor-help print:hidden">ⓘ</span>
+                    </span>
+                    <div className="absolute left-full ml-2 top-0 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 print:hidden">
+                      Percentage of checkouts that complete to purchase. This is your last chance - optimize form fields, payment options, loading times, and reassurance messaging.
+                      <div className="absolute right-full top-4 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-gray-900"></div>
+                    </div>
+                  </td>
                   <td className="p-3 border-b border-gray-200">{checkoutToPurchase.toFixed(1)}%</td>
                   <td className="p-3 border-b border-gray-200">{benchmarks.checkoutToPurchase.min}-{benchmarks.checkoutToPurchase.max}%</td>
                   <td className={`p-3 border-b border-gray-200 ${getStatus(checkoutToPurchase, benchmarks.checkoutToPurchase).class}`}>
                     {getStatus(checkoutToPurchase, benchmarks.checkoutToPurchase).text}
                   </td>
                 </tr>
-                <tr className="hover:bg-gray-50">
-                  <td className="p-3 border-b border-gray-200 font-semibold">Overall ATC → Purchase</td>
+                <tr className="hover:bg-gray-50 group">
+                  <td className="p-3 border-b border-gray-200 font-semibold relative">
+                    <span className="flex items-center gap-1">
+                      Overall ATC → Purchase
+                      <span className="text-xs text-gray-400 cursor-help print:hidden">ⓘ</span>
+                    </span>
+                    <div className="absolute left-full ml-2 top-0 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 print:hidden">
+                      Overall checkout funnel health - the percentage of people who add to cart and complete purchase. Below 25% suggests systematic checkout flow issues that need attention.
+                      <div className="absolute right-full top-4 w-0 h-0 border-t-4 border-b-4 border-r-4 border-transparent border-r-gray-900"></div>
+                    </div>
+                  </td>
                   <td className="p-3 border-b border-gray-200">{overallAtcToPurchase.toFixed(1)}%</td>
                   <td className="p-3 border-b border-gray-200">{benchmarks.overallAtcToPurchase.min}-{benchmarks.overallAtcToPurchase.max}%</td>
                   <td className={`p-3 border-b border-gray-200 ${getStatus(overallAtcToPurchase, benchmarks.overallAtcToPurchase).class}`}>
