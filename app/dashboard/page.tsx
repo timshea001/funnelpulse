@@ -636,7 +636,7 @@ export default function DashboardPage() {
                         <div className={`text-sm ${textColor}`}>
                           <p className="font-medium mb-1">Recommended actions:</p>
                           <ul className="list-disc list-inside space-y-1">
-                            {getRecommendations().slice(0, 3).map((rec, i) => (
+                            {getRecommendations().slice(0, 3).map((rec: string, i: number) => (
                               <li key={i}>{rec}</li>
                             ))}
                           </ul>
