@@ -305,7 +305,7 @@ export default function ReportPage() {
                   </td>
                   {account && (
                     <td className="p-3 border-b border-gray-200">
-                      {account.targetROAS ? `${parseFloat(account.targetROAS).toFixed(2)}x` : 'Not set'}
+                      {account.targetROAS ? `${Number(account.targetROAS).toFixed(2)}x` : 'Not set'}
                     </td>
                   )}
                   {account && (
@@ -313,7 +313,7 @@ export default function ReportPage() {
                       {(() => {
                         if (!account.targetROAS) return '-'
                         const actualROAS = data.summary.spend > 0 ? (data.summary.revenue / data.summary.spend) : 0
-                        const target = parseFloat(account.targetROAS)
+                        const target = Number(account.targetROAS)
                         if (actualROAS >= target) {
                           return <span className="text-green-600 font-semibold">✓ On target</span>
                         } else {
@@ -331,7 +331,7 @@ export default function ReportPage() {
                   </td>
                   {account && (
                     <td className="p-3 border-b border-gray-200">
-                      {account.targetCPA ? formatCurrency(parseFloat(account.targetCPA)) : 'Not set'}
+                      {account.targetCPA ? formatCurrency(Number(account.targetCPA)) : 'Not set'}
                     </td>
                   )}
                   {account && (
@@ -339,7 +339,7 @@ export default function ReportPage() {
                       {(() => {
                         if (!account.targetCPA || purchases === 0) return '-'
                         const actualCPA = data.summary.spend / purchases
-                        const target = parseFloat(account.targetCPA)
+                        const target = Number(account.targetCPA)
                         if (actualCPA <= target) {
                           return <span className="text-green-600 font-semibold">✓ On target</span>
                         } else {
@@ -354,17 +354,17 @@ export default function ReportPage() {
             </table>
             {account?.hasRepeatPurchases && (
               <div className="text-sm italic text-gray-600">
-                LTV Multiplier: {account.ltvMultiplier ? `${parseFloat(account.ltvMultiplier).toFixed(1)}x` : 'N/A'} • Repeat Purchase Frequency: {account.repeatPurchaseFrequency || 'N/A'}
+                LTV Multiplier: {account.ltvMultiplier ? `${Number(account.ltvMultiplier).toFixed(1)}x` : 'N/A'} • Repeat Purchase Frequency: {account.repeatPurchaseFrequency || 'N/A'}
               </div>
             )}
             {account && (account.breakEvenCPA || account.minimumROAS) && (
               <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded">
                 <h3 className="font-semibold text-sm mb-2">Business Context</h3>
                 <div className="text-sm text-gray-700 space-y-1">
-                  {account.averageOrderValue && <div>Average Order Value: {formatCurrency(parseFloat(account.averageOrderValue))}</div>}
-                  {account.profitMargin && <div>Profit Margin: {parseFloat(account.profitMargin).toFixed(1)}%</div>}
-                  {account.breakEvenCPA && <div>Break-even CPA: {formatCurrency(parseFloat(account.breakEvenCPA))}</div>}
-                  {account.minimumROAS && <div>Minimum ROAS: {parseFloat(account.minimumROAS).toFixed(2)}x</div>}
+                  {account.averageOrderValue && <div>Average Order Value: {formatCurrency(Number(account.averageOrderValue))}</div>}
+                  {account.profitMargin && <div>Profit Margin: {Number(account.profitMargin).toFixed(1)}%</div>}
+                  {account.breakEvenCPA && <div>Break-even CPA: {formatCurrency(Number(account.breakEvenCPA))}</div>}
+                  {account.minimumROAS && <div>Minimum ROAS: {Number(account.minimumROAS).toFixed(2)}x</div>}
                 </div>
               </div>
             )}
