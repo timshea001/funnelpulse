@@ -10,6 +10,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [adAccounts, setAdAccounts] = useState<any[]>([])
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null)
+  const [accountSettings, setAccountSettings] = useState<any>(null)
   const [dashboardData, setDashboardData] = useState<any>(null)
   const [recentReports, setRecentReports] = useState<any[]>([])
   const [generatingReport, setGeneratingReport] = useState(false)
@@ -43,6 +44,25 @@ export default function DashboardPage() {
 
     fetchAccounts()
   }, [])
+
+  // Fetch account settings when account changes
+  useEffect(() => {
+    if (!selectedAccount) return
+
+    async function fetchAccountSettings() {
+      try {
+        const response = await fetch(`/api/ad-accounts/${selectedAccount}`)
+        if (response.ok) {
+          const data = await response.json()
+          setAccountSettings(data.account)
+        }
+      } catch (error) {
+        console.error('Error fetching account settings:', error)
+      }
+    }
+
+    fetchAccountSettings()
+  }, [selectedAccount])
 
   // Fetch dashboard data when account or date range changes
   useEffect(() => {
@@ -278,6 +298,14 @@ export default function DashboardPage() {
                 <option value="last_30">Last 30 days</option>
                 <option value="this_month">This month</option>
               </select>
+              {selectedAccount && (
+                <button
+                  onClick={() => router.push(`/settings/${selectedAccount}`)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
+                >
+                  Settings
+                </button>
+              )}
               <UserButton />
             </div>
           </div>
@@ -285,132 +313,91 @@ export default function DashboardPage() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Funnel Health Section */}
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="text-sm text-gray-600 mb-1">Spend</div>
+            <div className="text-2xl font-bold text-gray-900">${data.spend.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="text-sm text-gray-600 mb-1">Revenue</div>
+            <div className="text-2xl font-bold text-gray-900">${data.revenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="text-sm text-gray-600 mb-1">ROAS</div>
+            <div className="text-2xl font-bold text-gray-900">{roas.toFixed(2)}x</div>
+            <div className="text-xs text-gray-500 mt-1">
+              Target: {accountSettings?.targetROAS ? `${accountSettings.targetROAS}x` : '4.0x'}
+            </div>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="text-sm text-gray-600 mb-1">CPA</div>
+            <div className="text-2xl font-bold text-gray-900">${cpa.toFixed(2)}</div>
+            <div className="text-xs text-gray-500 mt-1">
+              Target: ${accountSettings?.targetCPA ? accountSettings.targetCPA.toFixed(2) : '30.00'}
+            </div>
+          </div>
+        </div>
+
+        {/* Funnel Visualization Section */}
         <section className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Funnel Health</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-6">Conversion Funnel</h2>
 
-          {/* Funnel Visualization */}
-          <div className="space-y-4">
-            {/* Impressions → Clicks */}
-            <div className="flex items-center gap-4">
-              <div className="w-48">
-                <div className="text-sm font-medium text-gray-700">Impressions</div>
-                <div className="text-2xl font-bold text-gray-900">{impressions.toLocaleString()}</div>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${ctrStatus === 'good' ? 'bg-green-500' : ctrStatus === 'warning' ? 'bg-amber-500' : 'bg-red-500'}`}
-                      style={{ width: '100%' }}
-                    />
-                  </div>
-                  <div className={`text-sm font-medium ${ctrStatus === 'good' ? 'text-green-600' : ctrStatus === 'warning' ? 'text-amber-600' : 'text-red-600'}`}>
-                    {ctr}% CTR
-                  </div>
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Benchmark: {benchmarks.ctr.min}-{benchmarks.ctr.max}% • Status: {ctrStatus === 'good' ? 'Good ✓' : ctrStatus === 'warning' ? 'Below ⚠' : 'Critical ✗'}
-                </div>
-              </div>
-              <div className="w-48">
-                <div className="text-sm font-medium text-gray-700">Clicks</div>
-                <div className="text-2xl font-bold text-gray-900">{clicks.toLocaleString()}</div>
-              </div>
-            </div>
+          {/* SVG Funnel */}
+          <div className="relative">
+            <svg viewBox="0 0 800 600" className="w-full" style={{ maxHeight: '500px' }}>
+              {/* Funnel stages */}
+              {/* Impressions */}
+              <g>
+                <path d="M 100 50 L 700 50 L 650 150 L 150 150 Z" fill="#e5e7eb" stroke="#d1d5db" strokeWidth="2"/>
+                <text x="400" y="90" textAnchor="middle" className="text-sm font-semibold" fill="#374151">Impressions</text>
+                <text x="400" y="115" textAnchor="middle" className="text-xl font-bold" fill="#111827">{impressions.toLocaleString()}</text>
+              </g>
 
-            {/* Clicks → Page Views */}
-            <div className="flex items-center gap-4">
-              <div className="w-48" />
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500" style={{ width: '84.6%' }} />
-                  </div>
-                  <div className="text-sm font-medium text-green-600">84.6%</div>
-                </div>
-                <div className="text-xs text-gray-500 mt-1">View Rate • Status: Good ✓</div>
-              </div>
-              <div className="w-48">
-                <div className="text-sm font-medium text-gray-700">Page Views</div>
-                <div className="text-2xl font-bold text-gray-900">{pageViews.toLocaleString()}</div>
-              </div>
-            </div>
+              {/* Clicks */}
+              <g>
+                <path d="M 150 150 L 650 150 L 600 250 L 200 250 Z"
+                  fill={ctrStatus === 'good' ? '#dcfce7' : ctrStatus === 'warning' ? '#fef3c7' : '#fee2e2'}
+                  stroke={ctrStatus === 'good' ? '#86efac' : ctrStatus === 'warning' ? '#fcd34d' : '#fca5a5'}
+                  strokeWidth="2"/>
+                <text x="400" y="190" textAnchor="middle" className="text-sm font-semibold" fill="#374151">Clicks</text>
+                <text x="400" y="215" textAnchor="middle" className="text-xl font-bold" fill="#111827">{clicks.toLocaleString()}</text>
+                <text x="400" y="235" textAnchor="middle" className="text-xs" fill="#6b7280">{ctr}% CTR • Benchmark: {benchmarks.ctr.min}-{benchmarks.ctr.max}%</text>
+              </g>
 
-            {/* Page Views → Add to Cart */}
-            <div className="flex items-center gap-4">
-              <div className="w-48" />
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${clickToAtcStatus === 'good' ? 'bg-green-500' : clickToAtcStatus === 'warning' ? 'bg-amber-500' : 'bg-red-500'}`}
-                      style={{ width: `${Math.min(clickToAtcNum, 100)}%` }}
-                    />
-                  </div>
-                  <div className={`text-sm font-medium ${clickToAtcStatus === 'good' ? 'text-green-600' : clickToAtcStatus === 'warning' ? 'text-amber-600' : 'text-red-600'}`}>
-                    {clickToAtc}% ATC Rate
-                  </div>
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Benchmark: {benchmarks.clickToAtc.min}-{benchmarks.clickToAtc.max}% • Status: {clickToAtcStatus === 'good' ? 'Good ✓' : clickToAtcStatus === 'warning' ? 'Below ⚠' : 'Critical ✗'}
-                </div>
-              </div>
-              <div className="w-48">
-                <div className="text-sm font-medium text-gray-700">Add to Carts</div>
-                <div className="text-2xl font-bold text-gray-900">{addToCarts.toLocaleString()}</div>
-              </div>
-            </div>
+              {/* Add to Cart */}
+              <g>
+                <path d="M 200 250 L 600 250 L 550 350 L 250 350 Z"
+                  fill={clickToAtcStatus === 'good' ? '#dcfce7' : clickToAtcStatus === 'warning' ? '#fef3c7' : '#fee2e2'}
+                  stroke={clickToAtcStatus === 'good' ? '#86efac' : clickToAtcStatus === 'warning' ? '#fcd34d' : '#fca5a5'}
+                  strokeWidth="2"/>
+                <text x="400" y="290" textAnchor="middle" className="text-sm font-semibold" fill="#374151">Add to Cart</text>
+                <text x="400" y="315" textAnchor="middle" className="text-xl font-bold" fill="#111827">{addToCarts.toLocaleString()}</text>
+                <text x="400" y="335" textAnchor="middle" className="text-xs" fill="#6b7280">{clickToAtc}% Rate • Benchmark: {benchmarks.clickToAtc.min}-{benchmarks.clickToAtc.max}%</text>
+              </g>
 
-            {/* Add to Cart → Checkout */}
-            <div className="flex items-center gap-4">
-              <div className="w-48" />
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${atcToCheckoutStatus === 'good' ? 'bg-green-500' : atcToCheckoutStatus === 'warning' ? 'bg-amber-500' : 'bg-red-500'}`}
-                      style={{ width: `${Math.min(atcToCheckoutNum, 100)}%` }}
-                    />
-                  </div>
-                  <div className={`text-sm font-medium ${atcToCheckoutStatus === 'good' ? 'text-green-600' : atcToCheckoutStatus === 'warning' ? 'text-amber-600' : 'text-red-600'}`}>
-                    {atcToCheckout}%
-                  </div>
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Benchmark: {benchmarks.atcToCheckout.min}-{benchmarks.atcToCheckout.max}% • Status: {atcToCheckoutStatus === 'good' ? 'Good ✓' : atcToCheckoutStatus === 'warning' ? 'Below ⚠' : 'Critical ✗'}
-                </div>
-              </div>
-              <div className="w-48">
-                <div className="text-sm font-medium text-gray-700">Checkouts</div>
-                <div className="text-2xl font-bold text-gray-900">{checkouts.toLocaleString()}</div>
-              </div>
-            </div>
+              {/* Checkout */}
+              <g>
+                <path d="M 250 350 L 550 350 L 500 450 L 300 450 Z"
+                  fill={atcToCheckoutStatus === 'good' ? '#dcfce7' : atcToCheckoutStatus === 'warning' ? '#fef3c7' : '#fee2e2'}
+                  stroke={atcToCheckoutStatus === 'good' ? '#86efac' : atcToCheckoutStatus === 'warning' ? '#fcd34d' : '#fca5a5'}
+                  strokeWidth="2"/>
+                <text x="400" y="390" textAnchor="middle" className="text-sm font-semibold" fill="#374151">Checkout</text>
+                <text x="400" y="415" textAnchor="middle" className="text-xl font-bold" fill="#111827">{checkouts.toLocaleString()}</text>
+                <text x="400" y="435" textAnchor="middle" className="text-xs" fill="#6b7280">{atcToCheckout}% Rate • Benchmark: {benchmarks.atcToCheckout.min}-{benchmarks.atcToCheckout.max}%</text>
+              </g>
 
-            {/* Checkout → Purchase */}
-            <div className="flex items-center gap-4">
-              <div className="w-48" />
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${checkoutToPurchaseStatus === 'good' ? 'bg-green-500' : checkoutToPurchaseStatus === 'warning' ? 'bg-amber-500' : 'bg-red-500'}`}
-                      style={{ width: `${Math.min(checkoutToPurchaseNum, 100)}%` }}
-                    />
-                  </div>
-                  <div className={`text-sm font-medium ${checkoutToPurchaseStatus === 'good' ? 'text-green-600' : checkoutToPurchaseStatus === 'warning' ? 'text-amber-600' : 'text-red-600'}`}>
-                    {checkoutToPurchase}%
-                  </div>
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Benchmark: {benchmarks.checkoutToPurchase.min}-{benchmarks.checkoutToPurchase.max}% • Status: {checkoutToPurchaseStatus === 'good' ? 'Good ✓' : checkoutToPurchaseStatus === 'warning' ? 'Below ⚠' : 'Critical ✗'}
-                </div>
-              </div>
-              <div className="w-48">
-                <div className="text-sm font-medium text-gray-700">Purchases</div>
-                <div className="text-2xl font-bold text-gray-900">{purchases.toLocaleString()}</div>
-              </div>
-            </div>
+              {/* Purchase */}
+              <g>
+                <path d="M 300 450 L 500 450 L 450 550 L 350 550 Z"
+                  fill={checkoutToPurchaseStatus === 'good' ? '#dcfce7' : checkoutToPurchaseStatus === 'warning' ? '#fef3c7' : '#fee2e2'}
+                  stroke={checkoutToPurchaseStatus === 'good' ? '#86efac' : checkoutToPurchaseStatus === 'warning' ? '#fcd34d' : '#fca5a5'}
+                  strokeWidth="2"/>
+                <text x="400" y="490" textAnchor="middle" className="text-sm font-semibold" fill="#374151">Purchase</text>
+                <text x="400" y="515" textAnchor="middle" className="text-xl font-bold" fill="#111827">{purchases.toLocaleString()}</text>
+                <text x="400" y="535" textAnchor="middle" className="text-xs" fill="#6b7280">{checkoutToPurchase}% Rate • Benchmark: {benchmarks.checkoutToPurchase.min}-{benchmarks.checkoutToPurchase.max}%</text>
+              </g>
+            </svg>
           </div>
 
           {/* Optimization Opportunities */}
@@ -509,51 +496,6 @@ export default function DashboardPage() {
             </div>
           )}
         </section>
-
-        {/* Metrics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
-          <div className="metric-card">
-            <div className="text-sm text-gray-600">Spend</div>
-            <div className="text-2xl font-bold text-gray-900">${data.spend.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-            <div className="text-sm text-gray-500 mt-2">
-              {dateRange === 'last_7' ? 'Last 7 days' :
-               dateRange === 'last_14' ? 'Last 14 days' :
-               dateRange === 'last_30' ? 'Last 30 days' : 'This month'}
-            </div>
-          </div>
-
-          <div className="metric-card">
-            <div className="text-sm text-gray-600">Revenue</div>
-            <div className="text-2xl font-bold text-gray-900">${data.revenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-            <div className="text-sm text-gray-500 mt-2">
-              {dateRange === 'last_7' ? 'Last 7 days' :
-               dateRange === 'last_14' ? 'Last 14 days' :
-               dateRange === 'last_30' ? 'Last 30 days' : 'This month'}
-            </div>
-          </div>
-
-          <div className="metric-card">
-            <div className="text-sm text-gray-600">ROAS</div>
-            <div className="text-2xl font-bold text-gray-900">{roas.toFixed(2)}x</div>
-            <div className={`text-sm mt-2 ${roas >= 4.0 ? 'status-good' : 'status-bad'}`}>Target: 4.0x+</div>
-          </div>
-
-          <div className="metric-card">
-            <div className="text-sm text-gray-600">CPA</div>
-            <div className="text-2xl font-bold text-gray-900">${cpa > 0 ? cpa.toFixed(2) : 'N/A'}</div>
-            <div className={`text-sm mt-2 ${cpa > 0 && cpa < 30 ? 'status-good' : 'status-bad'}`}>Target: &lt;$30</div>
-          </div>
-
-          <div className="metric-card">
-            <div className="text-sm text-gray-600">Purchases</div>
-            <div className="text-2xl font-bold text-gray-900">{purchases}</div>
-            <div className="text-sm text-gray-500 mt-2">
-              {dateRange === 'last_7' ? 'Last 7 days' :
-               dateRange === 'last_14' ? 'Last 14 days' :
-               dateRange === 'last_30' ? 'Last 30 days' : 'This month'}
-            </div>
-          </div>
-        </div>
 
         {/* Reports Section */}
         <section className="bg-white rounded-lg border border-gray-200 p-6">
