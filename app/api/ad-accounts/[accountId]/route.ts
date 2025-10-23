@@ -4,7 +4,7 @@ import { db } from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { accountId: string } }
+  { params }: { params: Promise<{ accountId: string }> }
 ) {
   try {
     const { userId: clerkUserId } = await auth()
@@ -23,10 +23,13 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    // Await params
+    const { accountId } = await params
+
     // Get the ad account
     const account = await db.adAccount.findFirst({
       where: {
-        id: params.accountId,
+        id: accountId,
         userId: user.id
       }
     })
@@ -44,7 +47,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { accountId: string } }
+  { params }: { params: Promise<{ accountId: string }> }
 ) {
   try {
     const { userId: clerkUserId } = await auth()
@@ -62,6 +65,9 @@ export async function PATCH(
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
+
+    // Await params
+    const { accountId } = await params
 
     const body = await request.json()
     const {
@@ -85,7 +91,7 @@ export async function PATCH(
     // Update the account
     const account = await db.adAccount.update({
       where: {
-        id: params.accountId,
+        id: accountId,
         userId: user.id
       },
       data: {
