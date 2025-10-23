@@ -503,10 +503,47 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* What This Means Section */}
+          <div className="mt-8 bg-white/50 backdrop-blur-sm rounded-lg border border-orange-200 p-6">
+            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <svg className="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Performance Snapshot
+            </h3>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {(() => {
+                const goodStages = [ctrStatus, clickToAtcStatus, atcToCheckoutStatus, checkoutToPurchaseStatus].filter(s => s === 'good').length
+                const criticalStages = problematicStages.filter(s => s.severity === 'critical').length
+
+                if (goodStages === 4) {
+                  return "Excellent performance across all funnel stages! Your campaigns are converting efficiently from impression to purchase. Continue monitoring and testing to maintain these results."
+                } else if (goodStages >= 2) {
+                  const goodAreas = []
+                  if (ctrStatus === 'good') goodAreas.push('ad engagement')
+                  if (clickToAtcStatus === 'good') goodAreas.push('product interest')
+                  if (atcToCheckoutStatus === 'good') goodAreas.push('cart conversion')
+                  if (checkoutToPurchaseStatus === 'good') goodAreas.push('checkout completion')
+
+                  return `Strong ${goodAreas.join(' and ')} ${goodAreas.length > 1 ? 'are' : 'is'} working in your favor. Focus optimization efforts on the highlighted stages below to unlock additional revenue from your existing traffic.`
+                } else if (criticalStages > 0) {
+                  return "Your funnel has significant optimization opportunities. The critical stages highlighted below represent the biggest wins - small improvements here will have outsized impact on your bottom line."
+                } else {
+                  return "Your funnel shows room for improvement across multiple stages. Prioritize the recommendations below, starting with stages furthest below benchmark for the fastest ROI."
+                }
+              })()}
+            </p>
+          </div>
+
           {/* Optimization Opportunities */}
           {problematicStages.length > 0 ? (
             <div className="mt-6 space-y-3">
-              <h3 className="font-bold text-gray-900">Optimization Opportunities</h3>
+              <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                Optimization Opportunities
+              </h3>
               {problematicStages.map((stage, idx) => {
                 const isCritical = stage.severity === 'critical'
                 const bgColor = isCritical ? 'bg-red-50' : 'bg-amber-50'
@@ -514,44 +551,66 @@ export default function DashboardPage() {
                 const textColor = isCritical ? 'text-red-900' : 'text-amber-900'
                 const iconColor = isCritical ? 'text-red-600' : 'text-amber-600'
 
-                // Generate specific recommendations based on stage
-                const getRecommendations = () => {
-                  switch (stage.name) {
-                    case 'CTR':
-                      return [
-                        'Test new ad creative - refresh imagery and messaging',
-                        'Refine audience targeting - exclude poor performers',
-                        'A/B test ad copy focusing on benefits over features',
-                        'Review ad placement - may be showing in low-intent contexts'
-                      ]
-                    case 'Click→ATC':
-                      return [
-                        'Check page load speed - every second costs 7% conversions',
-                        'Add more product images showing product in use',
-                        'Include customer reviews and ratings prominently',
-                        'Test pricing display and value propositions',
-                        'Optimize for mobile - 60%+ of traffic is mobile'
-                      ]
-                    case 'ATC→Checkout':
-                      return [
-                        'Show shipping costs earlier (on product page or cart)',
-                        'Offer guest checkout - reduce account creation friction',
-                        'Add trust badges (security, money-back guarantee)',
-                        'Implement express checkout (Apple Pay, Shop Pay)',
-                        'Test progress indicator in checkout flow'
-                      ]
-                    case 'Checkout→Purchase':
-                      return [
-                        'Set up cart abandonment emails - highly qualified users',
-                        'Add inline form validation with helpful error messages',
-                        'Display order summary alongside payment form',
-                        'Test payment processor - ensure mobile wallets work',
-                        'Add "What happens next" message near submit button'
-                      ]
-                    default:
-                      return []
+                // Get industry from account settings
+                const industry = accountSettings?.industry || 'ecommerce'
+
+                // Generate context-aware intro
+                const getContextIntro = () => {
+                  // Check what's working well
+                  const goodMetrics = []
+                  if (ctrStatus === 'good') goodMetrics.push('CTR')
+                  if (clickToAtcStatus === 'good') goodMetrics.push('Click→ATC')
+                  if (atcToCheckoutStatus === 'good') goodMetrics.push('ATC→Checkout')
+                  if (checkoutToPurchaseStatus === 'good') goodMetrics.push('Checkout→Purchase')
+
+                  if (stage.name === 'Click→ATC' && ctrStatus === 'good') {
+                    return 'Your ads are driving traffic at an above-average rate. The issue is on your website - focus on product pages and landing experience.'
+                  } else if (stage.name === 'ATC→Checkout' && clickToAtcStatus === 'good') {
+                    return 'Customers are interested in your products (good ATC rate), but something is preventing them from starting checkout.'
+                  } else if (stage.name === 'Checkout→Purchase' && atcToCheckoutStatus === 'good') {
+                    return 'Shoppers are making it to checkout, but abandoning before completing. This is often the easiest win - small friction points have big impact here.'
+                  } else if (stage.name === 'CTR') {
+                    return goodMetrics.length > 0 ? 'While your site converts well, your ads need attention to drive more qualified traffic.' : 'Your ads aren\'t resonating with your target audience. Fresh creative and better targeting can dramatically improve results.'
                   }
+                  return null
                 }
+
+                // Generate industry-specific recommendations
+                const getRecommendations = () => {
+                  const baseRecs: any = {
+                    'CTR': [
+                      `Test ${industry === 'fashion' ? 'lifestyle imagery and user-generated content' : industry === 'beauty' ? 'before/after visuals and influencer partnerships' : 'product-in-use imagery and social proof'}`,
+                      'Refine audience targeting - exclude poor performers and lookalikes',
+                      'A/B test ad copy emphasizing unique value (not just features)',
+                      'Review ad placements - ensure you\'re showing in high-intent contexts'
+                    ],
+                    'Click→ATC': [
+                      'Page load speed: Every second delay costs 7% conversions',
+                      `${industry === 'fashion' || industry === 'beauty' ? 'Add detailed size guides and fit information' : 'Show product from multiple angles with zoom'}`,
+                      'Place customer reviews prominently (5-star ratings boost conversions 20%+)',
+                      `${industry === 'fashion' ? 'Add \"Complete the look\" recommendations' : 'Test different pricing displays and urgency elements'}`,
+                      'Mobile optimization is critical - 60%+ of traffic is mobile'
+                    ],
+                    'ATC→Checkout': [
+                      'Show shipping costs on product page (not just at checkout)',
+                      'Offer guest checkout - account creation kills 23% of conversions',
+                      'Add trust signals: security badges, money-back guarantee, free returns',
+                      `${industry === 'fashion' || industry === 'beauty' ? 'Show \"You may also like\" recommendations in cart' : 'Implement express checkout (Apple Pay, Shop Pay)'}`,
+                      'Display progress indicator - let shoppers know how many steps remain'
+                    ],
+                    'Checkout→Purchase': [
+                      'Set up cart abandonment emails (10-15% recovery rate typical)',
+                      'Add inline form validation - helpful error messages reduce friction',
+                      'Keep order summary visible alongside payment form',
+                      'Test payment options - ensure mobile wallets work smoothly',
+                      'Add reassurance: \"Secure checkout\" badge and \"What happens next\" copy'
+                    ]
+                  }
+
+                  return baseRecs[stage.name] || []
+                }
+
+                const contextIntro = getContextIntro()
 
                 return (
                   <div key={idx} className={`${bgColor} border ${borderColor} rounded-lg p-4`}>
@@ -565,12 +624,17 @@ export default function DashboardPage() {
                         <h4 className={`font-bold ${textColor} mb-1`}>
                           {idx === 0 && isCritical ? 'Priority: ' : ''}{stage.name} ({stage.value.toFixed(1)}%)
                         </h4>
+                        {contextIntro && (
+                          <p className={`text-sm ${textColor} mb-2 italic bg-white/30 p-2 rounded`}>
+                            💡 {contextIntro}
+                          </p>
+                        )}
                         <p className={`text-sm ${textColor} mb-2`}>
                           {isCritical ? 'Critically' : 'Currently'} below the {stage.benchmark.min}-{stage.benchmark.max}% benchmark.
-                          {isCritical && idx === 0 ? ' This is your highest-impact optimization opportunity.' : ''}
+                          {isCritical && idx === 0 ? ' This is your highest-impact opportunity.' : ''}
                         </p>
                         <div className={`text-sm ${textColor}`}>
-                          <p className="font-medium mb-1">Quick wins to test:</p>
+                          <p className="font-medium mb-1">Recommended actions:</p>
                           <ul className="list-disc list-inside space-y-1">
                             {getRecommendations().slice(0, 3).map((rec, i) => (
                               <li key={i}>{rec}</li>
