@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 model User {
@@ -64,6 +65,22 @@ model AdAccount {
   connectedAt      DateTime  @default(now())
   lastSyncedAt     DateTime?
   isActive         Boolean   @default(true)
+
+  // Per-account business context (copied from User model for account-specific settings)
+  industry                  String?
+  businessModel             String? // B2C, B2B, D2C
+  primaryGoal               String? // purchases, leads, app_installs, brand_awareness
+  averageOrderValue         Decimal? @db.Decimal(10, 2)
+  profitMargin              Decimal? @db.Decimal(5, 2) // stored as percentage
+  hasRepeatPurchases        Boolean  @default(false)
+  repeatPurchaseFrequency   String? // 1-2, 3-4, 5+, not_sure
+
+  // Calculated fields per account
+  breakEvenCPA    Decimal? @db.Decimal(10, 2)
+  targetCPA       Decimal? @db.Decimal(10, 2)
+  minimumROAS     Decimal? @db.Decimal(10, 2)
+  targetROAS      Decimal? @db.Decimal(10, 2)
+  ltvMultiplier   Decimal? @db.Decimal(5, 2)
 
   user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   reports          Report[]
