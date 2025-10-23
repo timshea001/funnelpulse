@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
       ]
     }
 
-    // Calculate conversion rates
+    // Calculate conversion rates with safe division
     const conversionRates = {
       clickToView: funnelData.clicks > 0 ? (funnelData.pageViews / funnelData.clicks) * 100 : 0,
       viewToATC: funnelData.pageViews > 0 ? (funnelData.addToCarts / funnelData.pageViews) * 100 : 0,
@@ -109,6 +109,8 @@ export async function POST(request: NextRequest) {
     const roas = accountInsights.summary.spend > 0 ? accountInsights.summary.revenue / accountInsights.summary.spend : 0
     const cpa = accountInsights.summary.purchases > 0 ? accountInsights.summary.spend / accountInsights.summary.purchases : 0
 
+    console.log('Calculated metrics:', { conversionRates, roas, cpa })
+
     // Get benchmarks for user's industry
     const benchmarks = await db.benchmark.findMany({
       where: {
@@ -119,11 +121,11 @@ export async function POST(request: NextRequest) {
     // Prepare data for AI insights
     const reportData = {
       summary: {
-        impressions: accountInsights.summary.impressions,
-        clicks: accountInsights.summary.clicks,
-        spend: accountInsights.summary.spend,
-        revenue: accountInsights.summary.revenue,
-        purchases: accountInsights.summary.purchases,
+        impressions: accountInsights.summary.impressions || 0,
+        clicks: accountInsights.summary.clicks || 0,
+        spend: accountInsights.summary.spend || 0,
+        revenue: accountInsights.summary.revenue || 0,
+        purchases: accountInsights.summary.purchases || 0,
         ctr: accountInsights.summary.impressions > 0 ? (accountInsights.summary.clicks / accountInsights.summary.impressions) * 100 : 0,
         cpm: accountInsights.summary.impressions > 0 ? (accountInsights.summary.spend / accountInsights.summary.impressions) * 1000 : 0,
         cpc: accountInsights.summary.clicks > 0 ? accountInsights.summary.spend / accountInsights.summary.clicks : 0,
@@ -134,25 +136,39 @@ export async function POST(request: NextRequest) {
       conversionRates,
       profitability: {
         breakEvenCPA: user.breakEvenCPA?.toNumber() || 0,
-        targetCPA: user.targetCPA?.toNumber() || 0,
-        minimumROAS: user.minimumROAS?.toNumber() || 0,
-        targetROAS: user.targetROAS?.toNumber() || 0,
-        isProfitable: cpa ? cpa < (user.breakEvenCPA?.toNumber() || 0) : false
+        targetCPA: user.targetCPA?.toNumber() || user.breakEvenCPA?.toNumber() || 0,
+        minimumROAS: user.minimumROAS?.toNumber() || 1,
+        targetROAS: user.targetROAS?.toNumber() || user.minimumROAS?.toNumber() || 1,
+        isProfitable: cpa > 0 && user.breakEvenCPA ? cpa < user.breakEvenCPA.toNumber() : false
       },
-      campaigns: campaignInsights.data,
-      adsets: adsetInsights.data
+      campaigns: campaignInsights.data || [],
+      adsets: adsetInsights.data || []
     }
 
-    // Generate AI insights
-    const insights = await generateInsights({
-      industry: user.industry || 'general',
-      averageOrderValue: user.averageOrderValue?.toNumber() || 0,
-      profitMargin: user.profitMargin?.toNumber() || 0,
-      dateRange: `${dateRangeStart} to ${dateRangeEnd}`,
-      metrics: reportData.summary,
-      funnel: funnelData,
-      profitability: reportData.profitability
-    })
+    console.log('Report data prepared:', { summaryMetrics: reportData.summary, profitability: reportData.profitability })
+
+    // Generate AI insights - only if we have meaningful data
+    let insights = []
+    if (reportData.summary.impressions > 0) {
+      try {
+        insights = await generateInsights({
+          industry: user.industry || 'general',
+          averageOrderValue: user.averageOrderValue?.toNumber() || 0,
+          profitMargin: user.profitMargin?.toNumber() || 0,
+          dateRange: `${dateRangeStart} to ${dateRangeEnd}`,
+          metrics: reportData.summary,
+          funnel: funnelData,
+          profitability: reportData.profitability
+        })
+        console.log('Insights generated successfully')
+      } catch (insightError) {
+        console.error('Error generating insights:', insightError)
+        // Continue without insights rather than failing the entire report
+        insights = []
+      }
+    } else {
+      console.log('No data available for insights generation')
+    }
 
     // Store report in database
     const report = await db.report.create({
@@ -186,8 +202,12 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error generating report:', error)
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to generate report' },
+      {
+        error: error instanceof Error ? error.message : 'Failed to generate report',
+        details: error instanceof Error ? error.stack : String(error)
+      },
       { status: 500 }
     )
   }

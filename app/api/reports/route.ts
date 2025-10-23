@@ -51,6 +51,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ reports })
   } catch (error) {
     console.error('Error fetching reports:', error)
-    return NextResponse.json({ error: 'Failed to fetch reports' }, { status: 500 })
+    console.error('Error details:', error instanceof Error ? error.stack : String(error))
+    return NextResponse.json({
+      error: 'Failed to fetch reports',
+      details: error instanceof Error ? error.message : String(error)
+    }, { status: 500 })
   }
 }

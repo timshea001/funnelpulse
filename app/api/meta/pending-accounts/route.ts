@@ -49,8 +49,12 @@ export async function GET() {
     })
   } catch (error) {
     console.error('Error fetching pending accounts:', error)
+    console.error('Error details:', error instanceof Error ? error.stack : String(error))
     return NextResponse.json(
-      { error: 'Internal server error' },
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     )
   }
