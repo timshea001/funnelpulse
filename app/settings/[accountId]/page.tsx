@@ -25,6 +25,36 @@ export default function AccountSettingsPage() {
     targetROAS: ''
   })
 
+  // Calculate break-even metrics based on current form values
+  const calculateBreakEven = () => {
+    const aov = parseFloat(formData.averageOrderValue) || 0
+    const margin = parseFloat(formData.profitMargin) || 0
+
+    const breakEvenCPA = aov * (margin / 100)
+    const minimumROAS = aov > 0 && breakEvenCPA > 0 ? aov / breakEvenCPA : 0
+
+    // Calculate LTV multiplier
+    let ltvMultiplier = 1
+    if (formData.hasRepeatPurchases) {
+      if (formData.repeatPurchaseFrequency === '5+') ltvMultiplier = 3
+      else if (formData.repeatPurchaseFrequency === '3-4') ltvMultiplier = 2
+      else if (formData.repeatPurchaseFrequency === '1-2') ltvMultiplier = 1.5
+    }
+
+    const ltvAdjustedCPA = breakEvenCPA * ltvMultiplier
+    const ltvAdjustedROAS = ltvMultiplier > 0 ? minimumROAS / ltvMultiplier : minimumROAS
+
+    return {
+      breakEvenCPA: breakEvenCPA > 0 ? breakEvenCPA : null,
+      minimumROAS: minimumROAS > 0 ? minimumROAS : null,
+      ltvMultiplier,
+      ltvAdjustedCPA: ltvAdjustedCPA > 0 ? ltvAdjustedCPA : null,
+      ltvAdjustedROAS: ltvAdjustedROAS > 0 ? ltvAdjustedROAS : null
+    }
+  }
+
+  const breakEvenMetrics = calculateBreakEven()
+
   useEffect(() => {
     async function loadAccount() {
       try {
@@ -241,6 +271,61 @@ export default function AccountSettingsPage() {
 
           <h2 className="text-xl font-bold text-gray-900 mb-6">Performance Targets</h2>
 
+          {/* Break-even metrics explanation */}
+          {breakEvenMetrics.breakEvenCPA && breakEvenMetrics.minimumROAS && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h3 className="font-semibold text-sm text-gray-900 mb-3 flex items-center gap-2">
+                <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                Recommended Targets Based on Your Business
+              </h3>
+              <div className="space-y-2 text-sm text-gray-700">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Break-even CPA:</span>
+                  <span className="font-mono">${breakEvenMetrics.breakEvenCPA.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Minimum ROAS to break even:</span>
+                  <span className="font-mono">{breakEvenMetrics.minimumROAS.toFixed(2)}x</span>
+                </div>
+                {formData.hasRepeatPurchases && breakEvenMetrics.ltvMultiplier > 1 && (
+                  <>
+                    <hr className="my-2 border-blue-200" />
+                    <p className="text-xs text-gray-600 italic">
+                      With repeat purchases ({breakEvenMetrics.ltvMultiplier}x LTV multiplier), you can afford higher acquisition costs:
+                    </p>
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">LTV-adjusted Max CPA:</span>
+                      <span className="font-mono text-green-700">${breakEvenMetrics.ltvAdjustedCPA?.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">LTV-adjusted Min ROAS:</span>
+                      <span className="font-mono text-green-700">{breakEvenMetrics.ltvAdjustedROAS?.toFixed(2)}x</span>
+                    </div>
+                  </>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormData({
+                    ...formData,
+                    targetCPA: breakEvenMetrics.ltvAdjustedCPA
+                      ? breakEvenMetrics.ltvAdjustedCPA.toFixed(2)
+                      : breakEvenMetrics.breakEvenCPA?.toFixed(2) || '',
+                    targetROAS: breakEvenMetrics.ltvAdjustedROAS
+                      ? breakEvenMetrics.ltvAdjustedROAS.toFixed(2)
+                      : breakEvenMetrics.minimumROAS?.toFixed(2) || ''
+                  })
+                }}
+                className="mt-3 w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Use Recommended Targets
+              </button>
+            </div>
+          )}
+
           {/* Target CPA */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -252,10 +337,10 @@ export default function AccountSettingsPage() {
               value={formData.targetCPA}
               onChange={(e) => setFormData({ ...formData, targetCPA: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-              placeholder="e.g., 30.00"
+              placeholder={breakEvenMetrics.breakEvenCPA ? `e.g., ${breakEvenMetrics.breakEvenCPA.toFixed(2)}` : 'e.g., 30.00'}
             />
             <p className="text-xs text-gray-500 mt-1">
-              Maximum cost per acquisition you're willing to pay
+              Maximum cost per acquisition you're willing to pay. Your break-even CPA is ${breakEvenMetrics.breakEvenCPA?.toFixed(2) || '0.00'} based on your AOV and margin.
             </p>
           </div>
 
@@ -270,10 +355,10 @@ export default function AccountSettingsPage() {
               value={formData.targetROAS}
               onChange={(e) => setFormData({ ...formData, targetROAS: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-              placeholder="e.g., 4.0"
+              placeholder={breakEvenMetrics.minimumROAS ? `e.g., ${breakEvenMetrics.minimumROAS.toFixed(2)}` : 'e.g., 4.0'}
             />
             <p className="text-xs text-gray-500 mt-1">
-              Minimum return on ad spend you need to be profitable
+              Minimum return on ad spend you need to be profitable. Your minimum ROAS is {breakEvenMetrics.minimumROAS?.toFixed(2) || '0.00'}x to break even.
             </p>
           </div>
 
