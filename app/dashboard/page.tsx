@@ -315,89 +315,192 @@ export default function DashboardPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="text-sm text-gray-600 mb-1">Spend</div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4 group relative">
+            <div className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+              Spend
+              <span className="text-xs text-gray-400 cursor-help">ⓘ</span>
+            </div>
             <div className="text-2xl font-bold text-gray-900">${data.spend.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+            {/* Tooltip */}
+            <div className="absolute left-0 bottom-full mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+              Total amount spent on Meta ads during this period. Track this against your budget to ensure you're staying on target.
+              <div className="absolute left-4 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+            </div>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="text-sm text-gray-600 mb-1">Revenue</div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4 group relative">
+            <div className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+              Revenue
+              <span className="text-xs text-gray-400 cursor-help">ⓘ</span>
+            </div>
             <div className="text-2xl font-bold text-gray-900">${data.revenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+            {/* Tooltip */}
+            <div className="absolute left-0 bottom-full mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+              Total revenue generated from purchases attributed to your Meta ads. This is based on the conversion value tracked by Meta's pixel.
+              <div className="absolute left-4 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+            </div>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="text-sm text-gray-600 mb-1">ROAS</div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4 group relative">
+            <div className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+              ROAS
+              <span className="text-xs text-gray-400 cursor-help">ⓘ</span>
+            </div>
             <div className="text-2xl font-bold text-gray-900">{roas.toFixed(2)}x</div>
             <div className="text-xs text-gray-500 mt-1">
               Target: {accountSettings?.targetROAS ? `${accountSettings.targetROAS}x` : '4.0x'}
             </div>
+            {/* Tooltip */}
+            <div className="absolute left-0 bottom-full mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+              Return on Ad Spend - How much revenue you generate for every dollar spent. For example, 4.0x means you make $4 for every $1 spent. Higher is better!
+              <div className="absolute left-4 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+            </div>
           </div>
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <div className="text-sm text-gray-600 mb-1">CPA</div>
+          <div className="bg-white rounded-lg border border-gray-200 p-4 group relative">
+            <div className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+              CPA
+              <span className="text-xs text-gray-400 cursor-help">ⓘ</span>
+            </div>
             <div className="text-2xl font-bold text-gray-900">${cpa.toFixed(2)}</div>
             <div className="text-xs text-gray-500 mt-1">
               Target: ${accountSettings?.targetCPA ? accountSettings.targetCPA.toFixed(2) : '30.00'}
+            </div>
+            {/* Tooltip */}
+            <div className="absolute left-0 bottom-full mb-2 w-64 p-3 bg-gray-900 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+              Cost Per Acquisition - How much you pay on average to get one customer. Lower is better. Your target CPA should be lower than your profit per sale.
+              <div className="absolute left-4 top-full w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
             </div>
           </div>
         </div>
 
         {/* Funnel Visualization Section */}
-        <section className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Conversion Funnel</h2>
+        <section className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl border border-orange-100 p-8 mb-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-8">Conversion Funnel</h2>
 
-          {/* SVG Funnel */}
-          <div className="relative">
-            <svg viewBox="0 0 800 600" className="w-full" style={{ maxHeight: '500px' }}>
-              {/* Funnel stages */}
-              {/* Impressions */}
-              <g>
-                <path d="M 100 50 L 700 50 L 650 150 L 150 150 Z" fill="#e5e7eb" stroke="#d1d5db" strokeWidth="2"/>
-                <text x="400" y="90" textAnchor="middle" className="text-sm font-semibold" fill="#374151">Impressions</text>
-                <text x="400" y="115" textAnchor="middle" className="text-xl font-bold" fill="#111827">{impressions.toLocaleString()}</text>
-              </g>
+          {/* Funnel with metrics on left */}
+          <div className="flex items-center gap-8">
+            {/* Metrics Column */}
+            <div className="flex-shrink-0 w-64 space-y-12">
+              {/* CTR Metric */}
+              <div className="text-right pr-4">
+                <div className={`text-3xl font-bold mb-1 ${ctrStatus === 'good' ? 'text-green-600' : ctrStatus === 'warning' ? 'text-amber-600' : 'text-red-600'}`}>
+                  {ctr}%
+                </div>
+                <div className="text-sm text-gray-600 font-mono">
+                  CTR
+                </div>
+                <div className="text-xs text-gray-500 font-mono mt-1">
+                  Target: {benchmarks.ctr.min}-{benchmarks.ctr.max}%
+                </div>
+              </div>
 
-              {/* Clicks */}
-              <g>
-                <path d="M 150 150 L 650 150 L 600 250 L 200 250 Z"
-                  fill={ctrStatus === 'good' ? '#dcfce7' : ctrStatus === 'warning' ? '#fef3c7' : '#fee2e2'}
+              {/* Click to ATC Metric */}
+              <div className="text-right pr-4 mt-16">
+                <div className={`text-3xl font-bold mb-1 ${clickToAtcStatus === 'good' ? 'text-green-600' : clickToAtcStatus === 'warning' ? 'text-amber-600' : 'text-red-600'}`}>
+                  {clickToAtc}%
+                </div>
+                <div className="text-sm text-gray-600 font-mono">
+                  Click → ATC
+                </div>
+                <div className="text-xs text-gray-500 font-mono mt-1">
+                  Target: {benchmarks.clickToAtc.min}-{benchmarks.clickToAtc.max}%
+                </div>
+              </div>
+
+              {/* ATC to Checkout Metric */}
+              <div className="text-right pr-4 mt-16">
+                <div className={`text-3xl font-bold mb-1 ${atcToCheckoutStatus === 'good' ? 'text-green-600' : atcToCheckoutStatus === 'warning' ? 'text-amber-600' : 'text-red-600'}`}>
+                  {atcToCheckout}%
+                </div>
+                <div className="text-sm text-gray-600 font-mono">
+                  ATC → Checkout
+                </div>
+                <div className="text-xs text-gray-500 font-mono mt-1">
+                  Target: {benchmarks.atcToCheckout.min}-{benchmarks.atcToCheckout.max}%
+                </div>
+              </div>
+
+              {/* Checkout to Purchase Metric */}
+              <div className="text-right pr-4 mt-16">
+                <div className={`text-3xl font-bold mb-1 ${checkoutToPurchaseStatus === 'good' ? 'text-green-600' : checkoutToPurchaseStatus === 'warning' ? 'text-amber-600' : 'text-red-600'}`}>
+                  {checkoutToPurchase}%
+                </div>
+                <div className="text-sm text-gray-600 font-mono">
+                  Checkout → Purchase
+                </div>
+                <div className="text-xs text-gray-500 font-mono mt-1">
+                  Target: {benchmarks.checkoutToPurchase.min}-{benchmarks.checkoutToPurchase.max}%
+                </div>
+              </div>
+            </div>
+
+            {/* SVG Funnel */}
+            <div className="flex-1">
+              <svg viewBox="0 0 600 580" className="w-full" style={{ maxHeight: '580px' }}>
+                <defs>
+                  {/* Gradients for warmer colors */}
+                  <linearGradient id="goodGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#d1fae5" />
+                    <stop offset="100%" stopColor="#a7f3d0" />
+                  </linearGradient>
+                  <linearGradient id="warningGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#fef3c7" />
+                    <stop offset="100%" stopColor="#fde68a" />
+                  </linearGradient>
+                  <linearGradient id="criticalGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#fee2e2" />
+                    <stop offset="100%" stopColor="#fecaca" />
+                  </linearGradient>
+                  <linearGradient id="grayGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="#f3f4f6" />
+                    <stop offset="100%" stopColor="#e5e7eb" />
+                  </linearGradient>
+
+                  {/* Rounded corner filters */}
+                  <filter id="round">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="2" />
+                  </filter>
+                </defs>
+
+                {/* Impressions */}
+                <path d="M 50 30 Q 50 20 60 20 L 540 20 Q 550 20 550 30 L 500 130 Q 500 140 490 140 L 110 140 Q 100 140 100 130 Z"
+                  fill="url(#grayGradient)"
+                  stroke="#d1d5db"
+                  strokeWidth="2"/>
+                <text x="300" y="65" textAnchor="middle" className="text-base font-semibold" fill="#6b7280">Impressions</text>
+                <text x="300" y="95" textAnchor="middle" className="text-2xl font-bold" fill="#111827">{impressions.toLocaleString()}</text>
+
+                {/* Clicks */}
+                <path d="M 100 140 L 500 140 Q 500 140 498 148 L 450 248 Q 450 260 438 260 L 162 260 Q 150 260 150 248 L 102 148 Q 100 140 100 140 Z"
+                  fill={ctrStatus === 'good' ? 'url(#goodGradient)' : ctrStatus === 'warning' ? 'url(#warningGradient)' : 'url(#criticalGradient)'}
                   stroke={ctrStatus === 'good' ? '#86efac' : ctrStatus === 'warning' ? '#fcd34d' : '#fca5a5'}
                   strokeWidth="2"/>
-                <text x="400" y="190" textAnchor="middle" className="text-sm font-semibold" fill="#374151">Clicks</text>
-                <text x="400" y="215" textAnchor="middle" className="text-xl font-bold" fill="#111827">{clicks.toLocaleString()}</text>
-                <text x="400" y="235" textAnchor="middle" className="text-xs" fill="#6b7280">{ctr}% CTR • Benchmark: {benchmarks.ctr.min}-{benchmarks.ctr.max}%</text>
-              </g>
+                <text x="300" y="185" textAnchor="middle" className="text-base font-semibold" fill="#374151">Clicks</text>
+                <text x="300" y="215" textAnchor="middle" className="text-2xl font-bold" fill="#111827">{clicks.toLocaleString()}</text>
 
-              {/* Add to Cart */}
-              <g>
-                <path d="M 200 250 L 600 250 L 550 350 L 250 350 Z"
-                  fill={clickToAtcStatus === 'good' ? '#dcfce7' : clickToAtcStatus === 'warning' ? '#fef3c7' : '#fee2e2'}
+                {/* Add to Cart */}
+                <path d="M 150 260 L 450 260 Q 450 260 448 268 L 400 368 Q 400 380 388 380 L 212 380 Q 200 380 200 368 L 152 268 Q 150 260 150 260 Z"
+                  fill={clickToAtcStatus === 'good' ? 'url(#goodGradient)' : clickToAtcStatus === 'warning' ? 'url(#warningGradient)' : 'url(#criticalGradient)'}
                   stroke={clickToAtcStatus === 'good' ? '#86efac' : clickToAtcStatus === 'warning' ? '#fcd34d' : '#fca5a5'}
                   strokeWidth="2"/>
-                <text x="400" y="290" textAnchor="middle" className="text-sm font-semibold" fill="#374151">Add to Cart</text>
-                <text x="400" y="315" textAnchor="middle" className="text-xl font-bold" fill="#111827">{addToCarts.toLocaleString()}</text>
-                <text x="400" y="335" textAnchor="middle" className="text-xs" fill="#6b7280">{clickToAtc}% Rate • Benchmark: {benchmarks.clickToAtc.min}-{benchmarks.clickToAtc.max}%</text>
-              </g>
+                <text x="300" y="305" textAnchor="middle" className="text-base font-semibold" fill="#374151">Add to Cart</text>
+                <text x="300" y="335" textAnchor="middle" className="text-2xl font-bold" fill="#111827">{addToCarts.toLocaleString()}</text>
 
-              {/* Checkout */}
-              <g>
-                <path d="M 250 350 L 550 350 L 500 450 L 300 450 Z"
-                  fill={atcToCheckoutStatus === 'good' ? '#dcfce7' : atcToCheckoutStatus === 'warning' ? '#fef3c7' : '#fee2e2'}
+                {/* Checkout */}
+                <path d="M 200 380 L 400 380 Q 400 380 398 388 L 350 488 Q 350 500 338 500 L 262 500 Q 250 500 250 488 L 202 388 Q 200 380 200 380 Z"
+                  fill={atcToCheckoutStatus === 'good' ? 'url(#goodGradient)' : atcToCheckoutStatus === 'warning' ? 'url(#warningGradient)' : 'url(#criticalGradient)'}
                   stroke={atcToCheckoutStatus === 'good' ? '#86efac' : atcToCheckoutStatus === 'warning' ? '#fcd34d' : '#fca5a5'}
                   strokeWidth="2"/>
-                <text x="400" y="390" textAnchor="middle" className="text-sm font-semibold" fill="#374151">Checkout</text>
-                <text x="400" y="415" textAnchor="middle" className="text-xl font-bold" fill="#111827">{checkouts.toLocaleString()}</text>
-                <text x="400" y="435" textAnchor="middle" className="text-xs" fill="#6b7280">{atcToCheckout}% Rate • Benchmark: {benchmarks.atcToCheckout.min}-{benchmarks.atcToCheckout.max}%</text>
-              </g>
+                <text x="300" y="425" textAnchor="middle" className="text-base font-semibold" fill="#374151">Checkout</text>
+                <text x="300" y="455" textAnchor="middle" className="text-2xl font-bold" fill="#111827">{checkouts.toLocaleString()}</text>
 
-              {/* Purchase */}
-              <g>
-                <path d="M 300 450 L 500 450 L 450 550 L 350 550 Z"
-                  fill={checkoutToPurchaseStatus === 'good' ? '#dcfce7' : checkoutToPurchaseStatus === 'warning' ? '#fef3c7' : '#fee2e2'}
+                {/* Purchase */}
+                <path d="M 250 500 L 350 500 Q 350 500 348 508 L 325 558 Q 325 565 318 565 L 282 565 Q 275 565 275 558 L 252 508 Q 250 500 250 500 Z"
+                  fill={checkoutToPurchaseStatus === 'good' ? 'url(#goodGradient)' : checkoutToPurchaseStatus === 'warning' ? 'url(#warningGradient)' : 'url(#criticalGradient)'}
                   stroke={checkoutToPurchaseStatus === 'good' ? '#86efac' : checkoutToPurchaseStatus === 'warning' ? '#fcd34d' : '#fca5a5'}
                   strokeWidth="2"/>
-                <text x="400" y="490" textAnchor="middle" className="text-sm font-semibold" fill="#374151">Purchase</text>
-                <text x="400" y="515" textAnchor="middle" className="text-xl font-bold" fill="#111827">{purchases.toLocaleString()}</text>
-                <text x="400" y="535" textAnchor="middle" className="text-xs" fill="#6b7280">{checkoutToPurchase}% Rate • Benchmark: {benchmarks.checkoutToPurchase.min}-{benchmarks.checkoutToPurchase.max}%</text>
-              </g>
-            </svg>
+                <text x="300" y="522" textAnchor="middle" className="text-base font-semibold" fill="#374151">Purchase</text>
+                <text x="300" y="548" textAnchor="middle" className="text-2xl font-bold" fill="#111827">{purchases.toLocaleString()}</text>
+              </svg>
+            </div>
           </div>
 
           {/* Optimization Opportunities */}
